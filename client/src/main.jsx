@@ -5,7 +5,7 @@ import App from "./App.jsx";
 import { Provider } from "react-redux";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import {AuthLayout, Call, ChatPageLayout, EditProfile, EmptyPage, HomeLayout, NotFoundPage, Profile, ScreenLayout, Updates} from "./pages/index.js";
-import { Chat, ChatProfile, CheckAuthentication, FindUser, ForgotPasswordLayout, Login, Register, SideBar, VerifyAccountLayout } from "./components/index.js";
+import { Chat, ChatProfile, CheckUserAuthentication, FindUser, ForgotPasswordLayout, Login, Register, SideBar, VerifyAccountLayout } from "./components/index.js";
 import Home from "./pages/Home.jsx";
 
 const router = createBrowserRouter([
@@ -15,7 +15,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "auth",
-        element: <CheckAuthentication><AuthLayout /></CheckAuthentication>,
+        element: <CheckUserAuthentication><AuthLayout /></CheckUserAuthentication>,
         children: [
           {
             path: "register",
@@ -29,7 +29,7 @@ const router = createBrowserRouter([
       },
       {
         path: "",
-        element: <CheckAuthentication><HomeLayout /></CheckAuthentication>,
+        element: <CheckUserAuthentication><HomeLayout /></CheckUserAuthentication>,
         children: [
           {
             path: "chat?",

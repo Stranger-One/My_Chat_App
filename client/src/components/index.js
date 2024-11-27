@@ -10,7 +10,7 @@ import Chat from "./Chat";
 import ChatProfile from "./ChatProfile";
 import ChatSection from "./ChatSection";
 import ChatUser from "./ChatUser";
-import CheckAuthentication from "./checkAuthentication";
+import CheckUserAuthentication from "./CheckUserAuthentication";
 import FindUser from "./FindUser";
 import Input from "./Input";
 import Loader from "./Loader";
@@ -18,8 +18,9 @@ import ReceiveMsg from "./ReceiveMsg";
 import SendMsg from "./SendMsg";
 import SideBar from "./SideBar";
 
+
 export {
-    CheckAuthentication,
+    CheckUserAuthentication,
     FindUser,
     ReceiveMsg,
     SendMsg,

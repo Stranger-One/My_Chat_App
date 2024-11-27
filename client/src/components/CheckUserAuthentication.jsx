@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { setLoading } from "../store/authSlice";
 
-const CheckAuthentication = ({ children }) => {
+const CheckUserAuthentication = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const dispatch = useDispatch();
   const location = useLocation();
@@ -31,4 +31,4 @@ const CheckAuthentication = ({ children }) => {
   return <>{children}</>;
 };
 
-export default CheckAuthentication;
+export default CheckUserAuthentication;
