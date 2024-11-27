@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Target the scrollbar */
+::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+}
+
+/* Track (background) */
+::-webkit-scrollbar-track {
+  background: #f0f0f0; /* Light gray background */
+  border-radius: 10px; /* Rounded corners */
+}
+
+/* Thumb (scroll indicator) */
+::-webkit-scrollbar-thumb {
+  background: #888; /* Darker gray for the scroll indicator */
+  border-radius: 10px; /* Rounded corners */
+}
+
+/* Hover effect for thumb */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Darker shade on hover */
+}
+
+.boxShadow{
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5)
+}
+
+input:-webkit-autofill {
+  background-color: secondary !important;
+  -webkit-text-fill-color: #000 !important;
+  box-shadow: 0 0 0px 1000px white inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
