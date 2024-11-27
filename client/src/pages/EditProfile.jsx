@@ -61,9 +61,9 @@ const EditProfile = () => {
       email: email,
       profilePic: profile,
     }
-    console.log("form data", data);
+    // console.log("form data", data);
     const response = await updateUser(data)
-    console.log(response);
+    // console.log(response);
     if (response.success) {
       toast.success(response.message)
       dispatch(setUserData(response.user))
