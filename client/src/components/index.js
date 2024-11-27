@@ -18,9 +18,7 @@ import ReceiveMsg from "./ReceiveMsg";
 import SendMsg from "./SendMsg";
 import SideBar from "./SideBar";
 
-
 export {
-    
     CheckAuthentication,
     FindUser,
     ReceiveMsg,
