@@ -4,9 +4,31 @@ import store from "./store/store.js";
 import App from "./App.jsx";
 import { Provider } from "react-redux";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import {AuthLayout, Call, ChatPageLayout, EditProfile, EmptyPage, HomeLayout, NotFoundPage, Profile, ScreenLayout, Updates} from "./pages/index.js";
-import { Chat, ChatProfile, CheckUserAuthentication, FindUser, ForgotPasswordLayout, Login, Register, SideBar, VerifyAccountLayout } from "./components/index.js";
+import {
+  AuthLayout,
+  Call,
+  ChatPageLayout,
+  EditProfile,
+  EmptyPage,
+  HomeLayout,
+  NotFoundPage,
+  Profile,
+  ScreenLayout,
+  Updates,
+} from "./pages/index.js";
+import {
+  Chat,
+  ChatProfile,
+  CheckUserAuthentication,
+  FindUser,
+  ForgotPasswordLayout,
+  Login,
+  Register,
+  SideBar,
+  VerifyAccountLayout,
+} from "./components/index.js";
 import Home from "./pages/Home.jsx";
+import { SocketProvider } from "./contexts/SocketProvider.jsx";
 
 const router = createBrowserRouter([
   {
@@ -15,7 +37,11 @@ const router = createBrowserRouter([
     children: [
       {
         path: "auth",
-        element: <CheckUserAuthentication><AuthLayout /></CheckUserAuthentication>,
+        element: (
+          <CheckUserAuthentication>
+            <AuthLayout />
+          </CheckUserAuthentication>
+        ),
         children: [
           {
             path: "register",
@@ -24,12 +50,16 @@ const router = createBrowserRouter([
           {
             path: "login",
             element: <Login />,
-          }
-        ]
+          },
+        ],
       },
       {
         path: "",
-        element: <CheckUserAuthentication><HomeLayout /></CheckUserAuthentication>,
+        element: (
+          <CheckUserAuthentication>
+            <HomeLayout />
+          </CheckUserAuthentication>
+        ),
         children: [
           {
             path: "chat?",
@@ -47,49 +77,78 @@ const router = createBrowserRouter([
                 path: "profile",
                 element: <ChatProfile />,
               },
-              
-            ]
+            ],
           },
           {
             path: "find-user",
-            element:  <ScreenLayout chatSection><FindUser /></ScreenLayout>
+            element: (
+              <ScreenLayout chatSection>
+                <FindUser />
+              </ScreenLayout>
+            ),
           },
           {
             path: "updates",
-            element: <ScreenLayout chatSection><Updates /></ScreenLayout>
+            element: (
+              <ScreenLayout chatSection>
+                <Updates />
+              </ScreenLayout>
+            ),
           },
           {
             path: "call",
-            element: <ScreenLayout chatSection><Call /></ScreenLayout>
+            element: (
+              <ScreenLayout chatSection>
+                <Call />
+              </ScreenLayout>
+            ),
           },
           {
             path: "profile",
-            element: <ScreenLayout chatSection><Profile/></ScreenLayout>
+            element: (
+              <ScreenLayout chatSection>
+                <Profile />
+              </ScreenLayout>
+            ),
           },
           {
             path: "profile/edit",
-            element: <ScreenLayout ><EditProfile /></ScreenLayout>,
+            element: (
+              <ScreenLayout>
+                <EditProfile />
+              </ScreenLayout>
+            ),
           },
           {
             path: "profile/forgot-password",
-            element: <ScreenLayout ><ForgotPasswordLayout /></ScreenLayout>,
+            element: (
+              <ScreenLayout>
+                <ForgotPasswordLayout />
+              </ScreenLayout>
+            ),
           },
           {
             path: "profile/verify-account",
-            element: <ScreenLayout ><VerifyAccountLayout /></ScreenLayout>,
-          }
-        ]
+            element: (
+              <ScreenLayout>
+                <VerifyAccountLayout />
+              </ScreenLayout>
+            ),
+          },
+        ],
       },
       {
         path: "*",
         element: <NotFoundPage />,
-      }
-    ]
-  }
+      },
+    ],
+  },
 ]);
 
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
-    <RouterProvider router={router} />
+    <SocketProvider>
+      <RouterProvider router={router} />
+    </SocketProvider>
   </Provider>
 );

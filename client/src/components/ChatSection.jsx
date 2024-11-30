@@ -7,13 +7,15 @@ import {
   getAllConversation,
 } from "../services/messageServices";
 import { setAllConversation } from "../store/authSlice";
+import { useSocket } from "../contexts/SocketProvider";
 
 const ChatSection = ({className}) => {
   const allConversation = useSelector((state) => state.auth.allConversation);
   const userData = useSelector((state) => state.auth.userData);
   const dispatch = useDispatch();
-  const socketConnection = useSelector((state) => state.auth.socketConnection);
   const [searchQuery, setSearchQuery] = useState("");
+  const socket = useSocket();
+
 
   const handleFindConversations = async () => {
     const response = await findConversation(searchQuery, userData._id);
@@ -23,8 +25,8 @@ const ChatSection = ({className}) => {
 
 
   const displayAllConversations = () => {
-    if(socketConnection){
-      socketConnection.emit("request-all-conversation", userData?._id);
+    if(socket){
+      socket.emit("request-all-conversation", userData?._id);
     }
   };
 
@@ -56,8 +58,8 @@ const ChatSection = ({className}) => {
       </div>
       <hr className="border-background" />
       <div className="flex flex-col gap-1 p-1 overflow-auto md:h-[calc(100vh-150px)] ">
-        {allConversation.length > 0 ? (
-          allConversation.map((conversation, index) => (
+        {allConversation?.length > 0 ? (
+          allConversation?.map((conversation, index) => (
             <ChatUser setSearchQuery={setSearchQuery} key={index} conversation={conversation} />
           ))
         ) : (

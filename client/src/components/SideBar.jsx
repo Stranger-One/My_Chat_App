@@ -12,7 +12,6 @@ import ChatSection from "./ChatSection";
 import { useDispatch } from "react-redux";
 import {
   setIsAuthenticated,
-  setSocketConnection,
   setUserData,
 } from "../store/authSlice";
 
@@ -24,7 +23,6 @@ const SideBar = () => {
     sessionStorage.removeItem("token");
     dispatch(setIsAuthenticated(false));
     dispatch(setUserData(null));
-    dispatch(setSocketConnection(null));
     navigate("/");
   };
 

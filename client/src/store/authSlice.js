@@ -7,7 +7,7 @@ const authSlice = createSlice({
         isAuthenticated: false,
         loading: true,
         onlineUsers: null,
-        socketConnection: null,
+        // socketConnection: null,
         allConversation: [],
         currentChatId: null
     },
@@ -24,9 +24,9 @@ const authSlice = createSlice({
         setOnlineUsers: (state, action) => {
             state.onlineUsers = action.payload;
         },
-        setSocketConnection: (state, action) => {
-            state.socketConnection = action.payload;
-        },
+        // setSocketConnection: (state, action) => {
+        //     state.socketConnection = action.payload;
+        // },
         setAllConversation: (state, action)=>{
             state.allConversation = action.payload;
         },
@@ -37,5 +37,5 @@ const authSlice = createSlice({
     }
 })
 
-export const { setUserData, setIsAuthenticated, setLoading, setOnlineUsers, setSocketConnection, setAllConversation, setCurrentChatId } = authSlice.actions;
+export const { setUserData, setIsAuthenticated, setLoading, setOnlineUsers, setAllConversation, setCurrentChatId } = authSlice.actions;
 export default authSlice.reducer;

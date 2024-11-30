@@ -13,7 +13,7 @@ const App = () => {
 
   const authenticate = async () => {
     const response = await checkAuthentication(token);
-    console.log(response);
+    // console.log(response);
 
     if (response?.success) {
       dispatch(setIsAuthenticated(true));

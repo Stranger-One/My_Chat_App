@@ -35,6 +35,7 @@ io.on("connection", async (socket) => {
 
     // send to client side
     io.emit("onlineUsers", Array.from(onlineUsers))
+    console.log("onlineUsers", Array.from(onlineUsers));
 
 
     // on page load send all chats

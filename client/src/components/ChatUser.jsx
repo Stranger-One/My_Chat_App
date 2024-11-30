@@ -2,19 +2,21 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { setCurrentChatId } from "../store/authSlice";
+import { useSocket } from "../contexts/SocketProvider";
 
 const ChatUser = ({ conversation, setSearchQuery }) => {
   const userData = useSelector((state) => state.auth.userData);
-  const socketConnection = useSelector((state) => state.auth.socketConnection);
   const currentChatId = useSelector(state => state.auth.currentChatId)
   const onlineUsers = useSelector(state => state.auth.onlineUsers)
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const socket = useSocket();
+
 
   const openChat = () => {
     navigate(`/chat/${conversation?.userDetails?._id}`)
     dispatch(setCurrentChatId(conversation?.userDetails?._id))
-    socketConnection.emit("seen", {
+    socket.emit("seen", {
       seenUserId: userData._id,
       chatUserId: conversation?.userDetails?._id,
       conversationId: conversation._id

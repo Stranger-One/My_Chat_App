@@ -13,6 +13,7 @@ import { getUser } from "../services/authService";
 import { useDispatch, useSelector } from "react-redux";
 import { getConversation } from "../services/messageServices";
 import { setCurrentChatId } from "../store/authSlice";
+import { useSocket } from "../contexts/SocketProvider";
 
 const Chat = () => {
   const params = useParams();
@@ -21,12 +22,12 @@ const Chat = () => {
   const [messageImageUrl, setMessageImageUrl] = useState("");
   const [messageVideoUrl, setMessageVideoUrl] = useState("");
   const [btnBg, setBtnBg] = useState("bg-primary");
-  const socketConnection = useSelector((state) => state.auth.socketConnection);
   const userData = useSelector((state) => state.auth.userData);
   const onlineUsers = useSelector((state) => state.auth.onlineUsers);
   const [allMessages, setAllMessages] = useState([]);
   const currentChatId = useSelector((state) => state.auth.currentChatId);
   const allConversation = useSelector((state) => state.auth.allConversation);
+  const socket = useSocket();
 
   const messagesEndRef = useRef(null);
   const dispatch = useDispatch();
@@ -44,68 +45,66 @@ const Chat = () => {
   // }, [allConversation])
 
   useEffect(() => {
-    if (socketConnection) {
-      // Request chat messages when the component mounts or currentChatId changes
-      socketConnection.emit(
-        "request-chat-messages",
-        params.userId,
-        userData?._id
-      );
+    // Request chat messages when the component mounts or currentChatId changes
+    socket.emit(
+      "request-chat-messages",
+      params.userId,
+      userData?._id
+    );
 
-      // Listen for user details
-      socketConnection.on("chat-user-details", (thisUserDetails) => {
-        if (thisUserDetails) {
-          setUser(thisUserDetails);
+    // Listen for user details
+    socket.on("chat-user-details", (thisUserDetails) => {
+      if (thisUserDetails) {
+        setUser(thisUserDetails);
+      }
+    });
+
+    // Listen for new chat messages
+    const handleReceiveMessages = (conversation) => {
+      // console.log("receive-chat-messages", conversation);
+      // console.log("params.userId", params.userId);
+
+      // Ensure the message belongs to the currently opened chat
+      const isRelevantChat =
+        (conversation?.receiver === userData?._id &&
+          conversation?.sender === params.userId) ||
+        (conversation?.sender === userData?._id &&
+          conversation?.receiver === params.userId);
+
+      // console.log("isRelevantChat", isRelevantChat);
+
+      // Only update messages if the chat is relevant
+      if (isRelevantChat) {
+        setAllMessages(conversation?.messages);
+        // console.log(conversation?.messages[conversation?.messages.length - 1].seen);
+        if (!conversation?.messages[conversation?.messages.length - 1].seen) {
+          socket.emit("seen", {
+            seenUserId: userData._id,
+            chatUserId: params.userId,
+            conversationId: conversation._id,
+          });
         }
-      });
+      } else {
+        // console.log("Irrelevant chat, ignoring messages.");
+      }
+    };
 
-      // Listen for new chat messages
-      const handleReceiveMessages = (conversation) => {
-        // console.log("receive-chat-messages", conversation);
-        // console.log("params.userId", params.userId);
+    socket.on("receive-chat-messages", handleReceiveMessages);
 
-        // Ensure the message belongs to the currently opened chat
-        const isRelevantChat =
-          (conversation?.receiver === userData?._id &&
-            conversation?.sender === params.userId) ||
-          (conversation?.sender === userData?._id &&
-            conversation?.receiver === params.userId);
+    // console.log("Socket listeners set up");
 
-        // console.log("isRelevantChat", isRelevantChat);
-
-        // Only update messages if the chat is relevant
-        if (isRelevantChat) {
-          setAllMessages(conversation?.messages);
-          // console.log(conversation?.messages[conversation?.messages.length - 1].seen);
-          if (!conversation?.messages[conversation?.messages.length - 1].seen) {
-            socketConnection.emit("seen", {
-              seenUserId: userData._id,
-              chatUserId: params.userId,
-              conversationId: conversation._id,
-            });
-          }
-        } else {
-          // console.log("Irrelevant chat, ignoring messages.");
-        }
-      };
-
-      socketConnection.on("receive-chat-messages", handleReceiveMessages);
-
-      // console.log("Socket listeners set up");
-
-      // Clean up listeners when the component unmounts or currentChatId changes
-      return () => {
-        socketConnection.off("receive-chat-messages", handleReceiveMessages);
-        socketConnection.off("chat-user-details");
-      };
-    }
-  }, [socketConnection, params.userId]);
+    // Clean up listeners when the component unmounts or currentChatId changes
+    return () => {
+      socket.off("receive-chat-messages", handleReceiveMessages);
+      socket.off("chat-user-details");
+    };
+  }, [socket, params.userId]);
 
   // useEffect(() => {
-  //   socketConnection.on("fetch-messages", (conversation) => {
+  //   socket.on("fetch-messages", (conversation) => {
   //     console.log("fetch-messages", conversation);
   //     if (currentChatId == conversation.messages[conversation.messages.length -1 ].sender && conversation.messages[conversation.messages.length -1 ].seen == false) {
-  //       socketConnection.emit("seen", {
+  //       socket.emit("seen", {
   //         seenUserId: userData._id,
   //         chatUserId: currentChatId,
   //         conversationId: conversation._id
@@ -118,7 +117,7 @@ const Chat = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (messageText) {
-      socketConnection?.emit("send-message", {
+      socket?.emit("send-message", {
         text: messageText,
         imageUrl: messageImageUrl,
         videoUrl: messageVideoUrl,
@@ -176,7 +175,7 @@ const Chat = () => {
                 </h2>
                 <p
                   className={`active-status line-clamp-1 leading-5 font-semibold text-sm ${
-                    onlineUsers.includes(user._id)
+                    onlineUsers?.includes(user._id)
                       ? "text-text"
                       : "text-text/70"
                   }`}

@@ -5,7 +5,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components";
 import {
   setIsAuthenticated,
-  setSocketConnection,
   setUserData,
 } from "../store/authSlice";
 
@@ -19,12 +18,11 @@ const Profile = () => {
     sessionStorage.removeItem("token");
     dispatch(setIsAuthenticated(false));
     dispatch(setUserData(null));
-    dispatch(setSocketConnection(null));
     navigate("/");
   };
 
   const navigateToEdit = () => {
-    console.log("navigateToEdit")
+    // console.log("navigateToEdit")
     navigate("edit")
   };
 
