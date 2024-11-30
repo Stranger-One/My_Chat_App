@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { IoStarOutline } from "react-icons/io5";
 import { IoCallOutline } from "react-icons/io5";
@@ -16,108 +16,79 @@ import { setCurrentChatId } from "../store/authSlice";
 import { useSocket } from "../contexts/SocketProvider";
 
 const Chat = () => {
+  const userData = useSelector((state) => state.auth.userData);
+  const onlineUsers = useSelector((state) => state.auth.onlineUsers);
   const params = useParams();
   const [user, setUser] = useState(null);
   const [messageText, setMessageText] = useState("");
   const [messageImageUrl, setMessageImageUrl] = useState("");
   const [messageVideoUrl, setMessageVideoUrl] = useState("");
   const [btnBg, setBtnBg] = useState("bg-primary");
-  const userData = useSelector((state) => state.auth.userData);
-  const onlineUsers = useSelector((state) => state.auth.onlineUsers);
   const [allMessages, setAllMessages] = useState([]);
-  const currentChatId = useSelector((state) => state.auth.currentChatId);
-  const allConversation = useSelector((state) => state.auth.allConversation);
   const socket = useSocket();
-
   const messagesEndRef = useRef(null);
-  const dispatch = useDispatch();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [allMessages]);
 
-  // useEffect(()=>{
-  //   const userId = params.userId;
+  const handleUserDetails = useCallback((thisUserDetails) => {
+    if (thisUserDetails) {
+      setUser(thisUserDetails);
+    }
+  }, []);
 
-  //   const chatMessages = allConversation.includes(userId)
-  //   console.log(chatMessages);
+  // Listen for new chat messages
+  const handleReceiveMessages = useCallback((conversation) => {
+    // console.log("receive-chat-messages", conversation);
+    // console.log("params.userId", params.userId);
 
-  // }, [allConversation])
+    // Ensure the message belongs to the currently opened chat
+    const isRelevantChat =
+      (conversation?.receiver === userData?._id &&
+        conversation?.sender === params.userId) ||
+      (conversation?.sender === userData?._id &&
+        conversation?.receiver === params.userId);
+
+    // console.log("isRelevantChat", isRelevantChat);
+
+    // Only update messages if the chat is relevant
+    if (isRelevantChat) {
+      setAllMessages(conversation?.messages);
+      const receiveMessages = conversation?.messages.filter( message => message.receiver === userData._id)
+      // console.log(receiveMessages);
+      
+      if (!receiveMessages[receiveMessages.length - 1].seen) {
+        socket.emit("seen", {
+          seenUserId: userData._id,
+          chatUserId: params.userId,
+          conversationId: conversation._id,
+        });
+      }
+    } else {
+      // console.log("Irrelevant chat, ignoring messages.");
+    }
+  }, [socket, params.userId]);
 
   useEffect(() => {
     // Request chat messages when the component mounts or currentChatId changes
-    socket.emit(
-      "request-chat-messages",
-      params.userId,
-      userData?._id
-    );
+    socket.emit("request-chat-messages", params.userId, userData?._id);
 
     // Listen for user details
-    socket.on("chat-user-details", (thisUserDetails) => {
-      if (thisUserDetails) {
-        setUser(thisUserDetails);
-      }
-    });
-
-    // Listen for new chat messages
-    const handleReceiveMessages = (conversation) => {
-      // console.log("receive-chat-messages", conversation);
-      // console.log("params.userId", params.userId);
-
-      // Ensure the message belongs to the currently opened chat
-      const isRelevantChat =
-        (conversation?.receiver === userData?._id &&
-          conversation?.sender === params.userId) ||
-        (conversation?.sender === userData?._id &&
-          conversation?.receiver === params.userId);
-
-      // console.log("isRelevantChat", isRelevantChat);
-
-      // Only update messages if the chat is relevant
-      if (isRelevantChat) {
-        setAllMessages(conversation?.messages);
-        // console.log(conversation?.messages[conversation?.messages.length - 1].seen);
-        if (!conversation?.messages[conversation?.messages.length - 1].seen) {
-          socket.emit("seen", {
-            seenUserId: userData._id,
-            chatUserId: params.userId,
-            conversationId: conversation._id,
-          });
-        }
-      } else {
-        // console.log("Irrelevant chat, ignoring messages.");
-      }
-    };
-
+    socket.on("chat-user-details", handleUserDetails);
     socket.on("receive-chat-messages", handleReceiveMessages);
 
-    // console.log("Socket listeners set up");
-
-    // Clean up listeners when the component unmounts or currentChatId changes
     return () => {
       socket.off("receive-chat-messages", handleReceiveMessages);
-      socket.off("chat-user-details");
+      socket.off("chat-user-details", handleUserDetails);
     };
   }, [socket, params.userId]);
-
-  // useEffect(() => {
-  //   socket.on("fetch-messages", (conversation) => {
-  //     console.log("fetch-messages", conversation);
-  //     if (currentChatId == conversation.messages[conversation.messages.length -1 ].sender && conversation.messages[conversation.messages.length -1 ].seen == false) {
-  //       socket.emit("seen", {
-  //         seenUserId: userData._id,
-  //         chatUserId: currentChatId,
-  //         conversationId: conversation._id
-  //       })
-  //     }
-  //   });
-  // }, [ currentChatId]);
 
   // emit send message event
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (messageText) {
-      socket?.emit("send-message", {
+      socket.emit("send-message", {
         text: messageText,
         imageUrl: messageImageUrl,
         videoUrl: messageVideoUrl,
@@ -166,7 +137,7 @@ const Chat = () => {
                   backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
                 }}
               >
-                <img src={user?.profilePic} alt="" className="object-cover" />
+                <img src={user?.profilePic} alt="" className="object-cover h-full w-full object-center" />
               </div>
 
               <div className="">

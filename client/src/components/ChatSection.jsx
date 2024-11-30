@@ -24,17 +24,11 @@ const ChatSection = ({className}) => {
   };
 
 
-  const displayAllConversations = () => {
-    if(socket){
-      socket.emit("request-all-conversation", userData?._id);
-    }
-  };
-
   useEffect(() => {
     if(searchQuery){
       handleFindConversations()
     } else {
-      displayAllConversations()
+      socket.emit("request-all-conversation", userData?._id);
     }
   }, [searchQuery]);
 

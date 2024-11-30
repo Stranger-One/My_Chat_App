@@ -38,7 +38,7 @@ const HomeLayout = () => {
     return () => {
       socket.off("receive-all-conversation");
       socket.off("onlineUsers", handleOnlineUsers);
-      socket.on("receive-all-conversation", handleReceiveConversations);
+      socket.off("receive-all-conversation", handleReceiveConversations);
     };
   }, [userData, socket]);
 

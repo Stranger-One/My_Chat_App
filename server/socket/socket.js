@@ -139,7 +139,6 @@ io.on("connection", async (socket) => {
             profilePic: user.profilePic,
             online: onlineUsers.has(_id)
         }
-
         socket.emit("chat-user-details", details)
 
         const conversation = await Conversation.findOne({
@@ -404,7 +403,7 @@ io.on("connection", async (socket) => {
     })
 
     socket.on("seen", async (data) => {
-        // console.log("seen data", data);
+        console.log("seen data", data);
         // Update the seen status of a message
         await Message.updateMany({
             receiver: new mongoose.Types.ObjectId(data.seenUserId),
@@ -427,7 +426,8 @@ io.on("connection", async (socket) => {
                 }
             ]
         }).populate("messages").sort({ updateAt: -1 })
-        // console.log("getConversation", getConversation)
+        console.log("conversation", conversation)
+
 
         io.to(data.chatUserId).to(data.seenUserId).emit("receive-chat-messages", conversation)
 
