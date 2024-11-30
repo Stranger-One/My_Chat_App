@@ -160,8 +160,7 @@ io.on("connection", async (socket) => {
             sender: messageDetails?.sender,
             receiver: messageDetails?.receiver,
             text: messageDetails?.text,
-            imageUrl: messageDetails?.imageUrl,
-            videoUrl: messageDetails?.videoUrl
+            file : messageDetails?.file
         })
         await message.save()
 

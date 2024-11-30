@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
-import { IoStarOutline } from "react-icons/io5";
+import { IoClose, IoStarOutline } from "react-icons/io5";
 import { IoCallOutline } from "react-icons/io5";
 import { IoVideocamOutline } from "react-icons/io5";
 import { RiLinksFill } from "react-icons/ri";
 import { LuSend } from "react-icons/lu";
+import { ImFileMusic } from "react-icons/im";
+import { ImFileVideo } from "react-icons/im";
+import { ImFileEmpty } from "react-icons/im";
 
 import { Link, useParams } from "react-router-dom";
 import ReceiveMsg from "./ReceiveMsg";
@@ -14,6 +17,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { getConversation } from "../services/messageServices";
 import { setCurrentChatId } from "../store/authSlice";
 import { useSocket } from "../contexts/SocketProvider";
+import axios from "axios";
+import Loader from "./Loader";
 
 const Chat = () => {
   const userData = useSelector((state) => state.auth.userData);
@@ -21,12 +26,30 @@ const Chat = () => {
   const params = useParams();
   const [user, setUser] = useState(null);
   const [messageText, setMessageText] = useState("");
-  const [messageImageUrl, setMessageImageUrl] = useState("");
-  const [messageVideoUrl, setMessageVideoUrl] = useState("");
   const [btnBg, setBtnBg] = useState("bg-primary");
   const [allMessages, setAllMessages] = useState([]);
   const socket = useSocket();
   const messagesEndRef = useRef(null);
+
+  const [fileSelected, setFileSelected] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [sendingMessage, setSendingMessage] = useState(false);
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+
+    if (!selectedFile) return;
+    setFileSelected(selectedFile);
+
+    // Generate preview for images
+    if (selectedFile.type.startsWith("image/")) {
+      const filePreview = URL.createObjectURL(selectedFile);
+      setFilePreview(filePreview);
+    } else {
+      // For non-image files, reset the preview
+      // setFilePreview(null);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -39,36 +62,41 @@ const Chat = () => {
   }, []);
 
   // Listen for new chat messages
-  const handleReceiveMessages = useCallback((conversation) => {
-    // console.log("receive-chat-messages", conversation);
-    // console.log("params.userId", params.userId);
+  const handleReceiveMessages = useCallback(
+    (conversation) => {
+      // console.log("receive-chat-messages", conversation);
+      // console.log("params.userId", params.userId);
 
-    // Ensure the message belongs to the currently opened chat
-    const isRelevantChat =
-      (conversation?.receiver === userData?._id &&
-        conversation?.sender === params.userId) ||
-      (conversation?.sender === userData?._id &&
-        conversation?.receiver === params.userId);
+      // Ensure the message belongs to the currently opened chat
+      const isRelevantChat =
+        (conversation?.receiver === userData?._id &&
+          conversation?.sender === params.userId) ||
+        (conversation?.sender === userData?._id &&
+          conversation?.receiver === params.userId);
 
-    // console.log("isRelevantChat", isRelevantChat);
+      // console.log("isRelevantChat", isRelevantChat);
 
-    // Only update messages if the chat is relevant
-    if (isRelevantChat) {
-      setAllMessages(conversation?.messages);
-      const receiveMessages = conversation?.messages.filter( message => message.receiver === userData._id)
-      // console.log(receiveMessages);
-      
-      if (!receiveMessages[receiveMessages.length - 1].seen) {
-        socket.emit("seen", {
-          seenUserId: userData._id,
-          chatUserId: params.userId,
-          conversationId: conversation._id,
-        });
+      // Only update messages if the chat is relevant
+      if (isRelevantChat) {
+        setAllMessages(conversation?.messages);
+        const receiveMessages = conversation?.messages.filter(
+          (message) => message.receiver === userData._id
+        );
+        // console.log(receiveMessages);
+
+        if (!receiveMessages[receiveMessages.length - 1].seen) {
+          socket.emit("seen", {
+            seenUserId: userData._id,
+            chatUserId: params.userId,
+            conversationId: conversation._id,
+          });
+        }
+      } else {
+        // console.log("Irrelevant chat, ignoring messages.");
       }
-    } else {
-      // console.log("Irrelevant chat, ignoring messages.");
-    }
-  }, [socket, params.userId]);
+    },
+    [socket, params.userId]
+  );
 
   useEffect(() => {
     // Request chat messages when the component mounts or currentChatId changes
@@ -87,18 +115,40 @@ const Chat = () => {
   // emit send message event
   const handleSendMessage = async (e) => {
     e.preventDefault();
+    setSendingMessage(true);
+    let fileUrl = "";
+    let messageVideoUrl = "";
+
+    if (fileSelected) {
+      const data = new FormData();
+      data.append("file", fileSelected);
+
+      // console.log("data", data);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/upload/upload-media`,
+        data
+      );
+
+      fileUrl = response.data.file.path;
+    }
+
     if (messageText) {
       socket.emit("send-message", {
         text: messageText,
-        imageUrl: messageImageUrl,
-        videoUrl: messageVideoUrl,
         sender: userData._id,
         receiver: params.userId,
+        file: {
+          fileName: fileSelected.name,
+          fileType: fileSelected.type,
+          fileUrl: fileUrl,
+          fileSize: fileSelected.size,
+        },
       });
       setMessageText("");
-      setMessageImageUrl("");
-      setMessageVideoUrl("");
+      setFileSelected(null);
     }
+    setSendingMessage(false);
   };
 
   const linkList = [
@@ -137,7 +187,11 @@ const Chat = () => {
                   backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
                 }}
               >
-                <img src={user?.profilePic} alt="" className="object-cover h-full w-full object-center" />
+                <img
+                  src={user?.profilePic}
+                  alt=""
+                  className="object-cover h-full w-full object-center"
+                />
               </div>
 
               <div className="">
@@ -151,7 +205,7 @@ const Chat = () => {
                       : "text-text/70"
                   }`}
                 >
-                  {onlineUsers.includes(user._id) ? "Online" : "Offline"}
+                  {onlineUsers?.includes(user._id) ? "Online" : "Offline"}
                 </p>
               </div>
             </Link>
@@ -198,8 +252,54 @@ const Chat = () => {
           <div className="chat-footer w-full mt-1">
             <form
               onSubmit={handleSendMessage}
-              className="w-[80%] mx-auto flex gap-4"
+              className="w-[80%] mx-auto flex gap-4 relative"
             >
+              {fileSelected && (
+                <div className="w-[300px] absolute bottom-12 left-0 bg-secondary  rounded-t-lg p-2">
+                  <div className="flex item-center justify-between">
+                    <div className=""></div>
+                    <button
+                      onClick={() => setFileSelected(null)}
+                      className=" mb-2 hover:bg-background duration-100 p-1 rounded-full"
+                    >
+                      <IoClose size={24} />
+                    </button>
+                  </div>
+                  <div className="w-full h-[200px]">
+                    {fileSelected.type.startsWith("image/") ? (
+                      <img
+                        src={filePreview}
+                        alt="Preview"
+                        className="w-full h-full object-cover object-center rounded-lg"
+                      />
+                    ) : (
+                      <div className="flex flex-col h-full w-full items-center justify-center px-4">
+                        {
+                          <div className="file-icon mb-4">
+                            {fileSelected.type.startsWith("audio/") ? (
+                              <ImFileMusic size={30} />
+                            ) : fileSelected.type.startsWith("video/") ? (
+                              <ImFileVideo size={30} />
+                            ) : (
+                              <ImFileEmpty size={30} />
+                            )}
+                          </div>
+                        }
+                        <p className="line-clamp-1">
+                          File Name: {fileSelected.name}
+                        </p>
+                        <p className="line-clamp-1">
+                          File Type: {fileSelected.type}
+                        </p>
+                        <p className="line-clamp-1">
+                          File Size:{" "}
+                          {(fileSelected.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="flex w-full rounded-md bg-secondary items-center px-2">
                 <input
                   disabled={!userData?.verified}
@@ -212,7 +312,12 @@ const Chat = () => {
                 <label htmlFor="file" className="cursor-pointer">
                   <RiLinksFill size={24} className="text-text" />
                 </label>
-                <input type="file" className="hidden" id="file" />
+                <input
+                  type="file"
+                  className="hidden"
+                  id="file"
+                  onChange={handleFileChange}
+                />
               </div>
               <button
                 type="submit"
@@ -223,7 +328,7 @@ const Chat = () => {
                   onMouseUp={() => setBtnBg("bg-primary")}
                   className={`${btnBg} p-2 rounded-full hover:rounded-lg duration-150`}
                 >
-                  <LuSend size={20} />
+                  {sendingMessage ? <Loader size={20} /> : <LuSend size={20} />}
                 </div>
               </button>
             </form>

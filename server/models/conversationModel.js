@@ -5,13 +5,23 @@ const messageSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
-    imageUrl: {
-        type: String,
-        default: ""
-    },
-    videoUrl: {
-        type: String,
-        default: ""
+    file: {
+        fileName:{
+            type: String,
+            default:""
+        },
+        fileType: {
+            type: String,
+            default: ""
+        },
+        fileUrl: {
+            type: String,
+            default: ""
+        },
+        fileSize: {
+            type: Number,
+            default: 0
+        }
     },
     seen: {
         type: Boolean,
@@ -27,7 +37,7 @@ const messageSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     }
-    
+
 }, {
     timestamps: true
 })
@@ -55,4 +65,4 @@ const conversationSchema = new mongoose.Schema({
 })
 const Message = mongoose.model("Message", messageSchema)
 const Conversation = mongoose.model("Conversation", conversationSchema);
-export {Message, Conversation}
+export { Message, Conversation }

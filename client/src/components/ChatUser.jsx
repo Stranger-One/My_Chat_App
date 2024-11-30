@@ -1,12 +1,11 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { setCurrentChatId } from "../store/authSlice";
 import { useSocket } from "../contexts/SocketProvider";
 
 const ChatUser = ({ conversation, setSearchQuery }) => {
   const userData = useSelector((state) => state.auth.userData);
-  const currentChatId = useSelector(state => state.auth.currentChatId)
   const onlineUsers = useSelector(state => state.auth.onlineUsers)
   const navigate = useNavigate()
   const dispatch = useDispatch()
