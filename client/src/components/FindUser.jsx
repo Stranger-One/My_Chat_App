@@ -55,11 +55,11 @@ const FindUser = () => {
                   backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
                 }}
               >
-                <img
+                {user?.profilePic && <img
                   src={user.profilePic}
                   alt="user avatar"
                   className="w-full h-full object-cover "
-                />
+                />}
               </div>
 
               <div className="">

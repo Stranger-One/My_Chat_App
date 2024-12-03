@@ -7,10 +7,12 @@ import HomeLayout from "./HomeLayout";
 import NotFoundPage from "./NotFoundPage";
 import Profile from "./Profile";
 import ScreenLayout from "./ScreenLayout";
+import UpdatePageLayout from "./UpdatePageLayout";
 import Updates from "./Updates";
 
 
 export {
+    UpdatePageLayout,
     EditProfile,
     ScreenLayout,
     Call,

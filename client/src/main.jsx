@@ -14,12 +14,14 @@ import {
   NotFoundPage,
   Profile,
   ScreenLayout,
+  UpdatePageLayout,
   Updates,
 } from "./pages/index.js";
 import {
   Chat,
   ChatProfile,
   CheckUserAuthentication,
+  EmptyStatus,
   FindUser,
   ForgotPasswordLayout,
   Login,
@@ -29,6 +31,7 @@ import {
 } from "./components/index.js";
 import Home from "./pages/Home.jsx";
 import { SocketProvider } from "./contexts/SocketProvider.jsx";
+import AddStatus from "./components/AddStatus.jsx";
 
 const router = createBrowserRouter([
   {
@@ -90,10 +93,24 @@ const router = createBrowserRouter([
           {
             path: "updates",
             element: (
-              <ScreenLayout chatSection>
-                <Updates />
+              <ScreenLayout updatesSection >
+                <UpdatePageLayout />
               </ScreenLayout>
             ),
+            children: [
+              {
+                path: "",
+                element: <EmptyStatus />,
+              },
+              {
+                path: "add",
+                element: <AddStatus />,
+              },
+              {
+                path: ":statusUserIndex/:statusUserId",
+                element: <Updates />,
+              },
+            ],
           },
           {
             path: "call",

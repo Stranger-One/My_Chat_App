@@ -35,10 +35,10 @@ const SideBar = () => {
       path: "/find-user",
       icon: FaUserPlus,
     },
-    {
-      path: "/updates",
-      icon: IoAtCircleSharp,
-    },
+    // {
+    //   path: "/updates",
+    //   icon: IoAtCircleSharp,
+    // },
     {
       path: "/call",
       icon: IoCallSharp,

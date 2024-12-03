@@ -53,3 +53,15 @@ export const findConversation = async (query, userId) => {
 
     }
 };
+
+export const deleteConversation = async (conversationsId) => {
+    try {
+        const response = await axiosInstant.delete(`/delete-conversation/${conversationsId}`)
+        return response.data
+
+    } catch (error) {
+        console.error(error);
+        return error
+    }
+};
+

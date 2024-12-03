@@ -5,6 +5,7 @@ import getUserDetailsFromToken from '../helpers/getUserDetailsFromToken.js'
 import User from '../models/userModel.js'
 import { Conversation, Message } from '../models/conversationModel.js'
 import mongoose from 'mongoose'
+import Status from '../models/StatusModel.js'
 
 const app = express()
 const server = createServer(app)
@@ -27,7 +28,7 @@ io.on("connection", async (socket) => {
 
     // get user details from token
     const userDetails = await getUserDetailsFromToken(token);
-    // console.log("user", user);
+    console.log("user", userDetails);
 
     // create room
     socket.join(userDetails?._id)
@@ -123,9 +124,9 @@ io.on("connection", async (socket) => {
                 $sort: { updatedAt: -1 } // Sort conversations by creation date
             }
         ])
-
         // console.log("getAllConversation", getAllConversation);
         socket.emit("receive-all-conversation", getAllConversation)
+
     })
 
     socket.on("request-chat-messages", async (_id, userId) => {
@@ -160,7 +161,7 @@ io.on("connection", async (socket) => {
             sender: messageDetails?.sender,
             receiver: messageDetails?.receiver,
             text: messageDetails?.text,
-            file : messageDetails?.file
+            file: messageDetails?.file
         })
         await message.save()
 
@@ -605,6 +606,117 @@ io.on("connection", async (socket) => {
         //     }
         // ])
         // io.to(messageDetails?.receiver).emit("receive-all-conversation", getAllConversationReceiver)
+    })
+
+    socket.on("add_status", async (statusDetails) => {
+        // console.log(statusDetails);
+        const status = new Status(statusDetails)
+        await status.save()
+
+        io.to(statusDetails.user).emit("add_status", {
+            success: true,
+            message: "Status added successfully"
+        })
+
+        // const getStatus = await Status.find().populate("user", "name email profilePic ")
+        // console.log("getStatus", getStatus);
+
+        const groupedStatusData = await Status.aggregate([
+            {
+                $group: {
+                    _id: "$user", // Group by user ID
+                    user: { $first: "$user" }, // Include user details
+                    files: {
+                        $push: {
+                            file: "$file", // Add the file details
+                            message: "$message", // Add the corresponding message
+                            message: "$message", // Add the corresponding message
+                            createdAt: "$createdAt",
+                            seen: "$seen"
+                        }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "user",
+                    foreignField: "_id",
+                    as: "userDetails"
+                }
+            },
+            {
+                $unwind: "$userDetails" // Flatten the user details array
+            },
+            {
+                $project: {
+                    _id: 0,
+                    files: 1,
+                    count: 1,
+                    "userDetails._id": 1,
+                    "userDetails.name": 1,
+                    "userDetails.email": 1,
+                    "userDetails.profilePic": 1,
+                }
+            },
+            {
+                $sort: { "files.0.createdAt": -1 }
+            },
+        ]);
+
+
+        io.emit("get_status", groupedStatusData)
+
+    })
+
+    socket.on("get_status", async () => {
+
+        const groupedStatusData = await Status.aggregate([
+            {
+                $group: {
+                    _id: "$user", // Group by user ID
+                    user: { $first: "$user" }, // Include user details
+                    files: {
+                        $push: {
+                            _id: "$_id",
+                            file: "$file", // Add the file details
+                            message: "$message", // Add the corresponding message
+                            createdAt: "$createdAt",
+                            seen: "$seen"
+                        }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "user",
+                    foreignField: "_id",
+                    as: "userDetails"
+                }
+            },
+            {
+                $unwind: "$userDetails" // Flatten the user details array
+            },
+            {
+                $project: {
+                    _id: 0,
+                    files: 1,
+                    count: 1,
+                    "userDetails._id": 1,
+                    "userDetails.name": 1,
+                    "userDetails.email": 1,
+                    "userDetails.profilePic": 1,
+                }
+            },
+            {
+                $sort: { "files.0.createdAt": -1 }
+            },
+        ]);
+
+        io.emit("get_status", groupedStatusData)
     })
 
 

@@ -37,9 +37,6 @@ const SendMsg = ({ message }) => {
             ) : (
               ""
             )}
-            {/* <button className="absolute bottom-2 right-2 p-1 bg-background hover:bg-background/70 duration-100 rounded-lg">
-              <LuDownload size={20} className="text-text" />
-            </button> */}
           </div>
         )}
         <div className="flex w-full flex-wrap justify-end">

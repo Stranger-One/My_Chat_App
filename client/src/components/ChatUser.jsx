@@ -13,7 +13,9 @@ const ChatUser = ({ conversation, setSearchQuery }) => {
 
 
   const openChat = () => {
-    navigate(`/chat/${conversation?.userDetails?._id}`)
+    navigate(`/chat/${conversation?.userDetails?._id}`, {
+      state: { conversationId: conversation?._id },
+    })
     dispatch(setCurrentChatId(conversation?.userDetails?._id))
     socket.emit("seen", {
       seenUserId: userData._id,

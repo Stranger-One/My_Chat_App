@@ -46,7 +46,7 @@ const Login = () => {
 
       setSlide(2);
     } else {
-      toast.error(response.message);
+      toast.error("Not recognize! Please check your Credential");
     }
     setLoading(false)
   };

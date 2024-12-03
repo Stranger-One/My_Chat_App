@@ -237,3 +237,31 @@ export const findConversation = async (req, res) => {
     }
 };
 
+export const deleteConversation = async (req, res) => {
+    try {
+        const {conversationId} = req.params;
+
+        if(!conversationId){
+            return res.status(400).json({
+                success: false,
+                message: "Please provide conversation id"
+                })
+        }
+
+        await Conversation.findByIdAndDelete(conversationId)
+        res.status(200).json({
+            success: true,
+            message: "Conversation deleted successfully"
+        })
+    
+        
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Conversation deleted failed",
+            error
+        })
+    }
+};
+

@@ -9,7 +9,8 @@ const authSlice = createSlice({
         onlineUsers: null,
         // socketConnection: null,
         allConversation: [],
-        currentChatId: null
+        currentChatId: null,
+        allUserStatus: [],
     },
     reducers: {
         setUserData: (state, action) => {
@@ -32,10 +33,13 @@ const authSlice = createSlice({
         },
         setCurrentChatId: (state, action) => {
             state.currentChatId = action.payload;
-        }  
+        }  ,
+        setAllUserStatus: (state, action) =>{
+            state.allUserStatus = action.payload;
+        }
 
     }
 })
 
-export const { setUserData, setIsAuthenticated, setLoading, setOnlineUsers, setAllConversation, setCurrentChatId } = authSlice.actions;
+export const { setUserData, setIsAuthenticated, setLoading, setOnlineUsers, setAllConversation, setCurrentChatId, setAllUserStatus } = authSlice.actions;
 export default authSlice.reducer;
