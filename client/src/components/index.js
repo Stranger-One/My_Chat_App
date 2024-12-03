@@ -7,6 +7,7 @@ import VerifyAccount from "./auth/VerifyAccount";
 import VerifyAccountLayout from "./auth/VerifyAccountLayout";
 import Button from "./Button";
 import Chat from "./Chat";
+import ChatHeader from "./ChatHeader";
 import ChatInputFooter from "./ChatInputFooter";
 import ChatProfile from "./ChatProfile";
 import ChatSection from "./ChatSection";
@@ -24,6 +25,7 @@ import UpdatesSection from "./UpdatesSection";
 import UserStatus from "./UserStatus";
 
 export {
+    ChatHeader,
     SelectedFillePreview,
     ChatInputFooter,
     EmptyStatus,

@@ -28,7 +28,7 @@ io.on("connection", async (socket) => {
 
     // get user details from token
     const userDetails = await getUserDetailsFromToken(token);
-    console.log("user", userDetails);
+    // console.log("user", userDetails);
 
     // create room
     socket.join(userDetails?._id)
@@ -36,7 +36,7 @@ io.on("connection", async (socket) => {
 
     // send to client side
     io.emit("onlineUsers", Array.from(onlineUsers))
-    console.log("onlineUsers", Array.from(onlineUsers));
+    // console.log("onlineUsers", Array.from(onlineUsers));
 
 
     // on page load send all chats
@@ -403,7 +403,7 @@ io.on("connection", async (socket) => {
     })
 
     socket.on("seen", async (data) => {
-        console.log("seen data", data);
+        // console.log("seen data", data);
         // Update the seen status of a message
         await Message.updateMany({
             receiver: new mongoose.Types.ObjectId(data.seenUserId),
@@ -426,7 +426,7 @@ io.on("connection", async (socket) => {
                 }
             ]
         }).populate("messages").sort({ updateAt: -1 })
-        console.log("conversation", conversation)
+        // console.log("conversation", conversation)
 
 
         io.to(data.chatUserId).to(data.seenUserId).emit("receive-chat-messages", conversation)
@@ -718,8 +718,6 @@ io.on("connection", async (socket) => {
 
         io.emit("get_status", groupedStatusData)
     })
-
-
 
 
 

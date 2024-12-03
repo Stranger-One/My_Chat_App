@@ -1,6 +1,6 @@
 import React from "react";
 import { ChatSection, UpdatesSection } from "../components";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import EmptyPage from "./EmptyPage";
 import { FaArrowLeft } from "react-icons/fa";
 
@@ -11,6 +11,8 @@ const ScreenLayout = ({
   noNavigation,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation()
+  console.log((location.pathname).replace('/', '').replace('-', ' '));
 
   return (
     <div
@@ -36,13 +38,14 @@ const ScreenLayout = ({
         <UpdatesSection />
       </div>)} */}
       <div className="h-full w-full">
-        <div className="chat-header bg-secondary shadow-md w-full flex gap-2 items-center p-3">
+        <div className=" bg-secondary shadow-md w-full flex gap-2 items-center p-3">
           <button
             onClick={() => navigate(-1)}
             className="p-2 bg-surface hover:bg-background cursor-pointer rounded-full"
           >
             <FaArrowLeft size={20} className="text-text" />
           </button>
+          <h2 className="text-text capitalize text-lg">{(location.pathname).replace('/', '').replace('-', ' ')}</h2>
         </div>
         {children}
       </div>

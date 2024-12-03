@@ -10,7 +10,7 @@ const Input = ({
   ...props
 }) => {
   return (
-    <div className="w-full bg-secondary my-0">
+    <div className="w-full bg-secondary  my-0">
       {label && (
         <label htmlFor={name} className="whitespace-nowrap font-medium text-text">
           {label}:
@@ -22,7 +22,7 @@ const Input = ({
         id={name}
         value={value}
         onChange={onChange}
-        className=" w-full outline-none placeholder:text-text/70 text-text rounded-lg px-2 py-2 bg-background "
+        className=" w-full outline-none placeholder:text-text/70 text-text rounded-lg overflow-hidden px-2 py-2 bg-background "
         placeholder={placeholder}
         {...props}
       />

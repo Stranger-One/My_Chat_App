@@ -43,6 +43,10 @@ const SideBar = () => {
       path: "/call",
       icon: IoCallSharp,
     },
+    {
+      path: "/profile",
+      icon: CgProfile,
+    },
   ];
 
   return (
@@ -64,19 +68,6 @@ const SideBar = () => {
               <link.icon size={24} className=" group-hover:text-background" />
             </NavLink>
           ))}
-          <NavLink
-            to="/profile"
-            className={({ isActive }) =>
-              `p-1 flex items-center justify-center w-fit rounded-md cursor-pointer group duration-100 ${
-                isActive ? "bg-secondary" : "hover:bg-text"
-              }`
-            }
-          >
-            <CgProfile
-              size={24}
-              className="text-text group-hover:text-background"
-            />
-          </NavLink>
         </div>
 
         <div className="w-full hidden md:flex flex-col gap-2 items-center">
