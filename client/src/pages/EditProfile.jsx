@@ -5,11 +5,11 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "../services/authService";
-import { setUserData } from "../store/authSlice";
+import { setUserData } from "../store/globalSlice";
 import toast from "react-hot-toast";
 
 const EditProfile = () => {
-  const userData = useSelector((state) => state.auth.userData);
+  const userData = useSelector((state) => state.global.userData);
   const [fullname, setFullname] = useState(userData.name);
   const [email, setEmail] = useState(userData.email);
   const [profile, setProfile] = useState(userData.profilePic);

@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import { setLoading } from "../store/authSlice";
+import { setLoading } from "../store/globalSlice";
 
 const CheckUserAuthentication = ({ children }) => {
-  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const isAuthenticated = useSelector((state) => state.global.isAuthenticated);
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();

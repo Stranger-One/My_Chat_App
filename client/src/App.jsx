@@ -1,15 +1,18 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { checkAuthentication } from "./services/authService";
 import { useDispatch, useSelector } from "react-redux";
-import { setIsAuthenticated, setUserData } from "./store/authSlice";
-import { Loader } from "./components";
+import {
+  setIsAuthenticated,
+  setUserData,
+} from "./store/globalSlice";
+import { CallPageLayout } from "./pages";
+
 
 const App = () => {
-  const dispatch = useDispatch();
   const token = JSON.parse(sessionStorage.getItem("token"));
-  const loading = useSelector((status) => status.auth.loading);
+  const dispatch = useDispatch();
 
   const authenticate = async () => {
     const response = await checkAuthentication(token);
@@ -21,21 +24,36 @@ const App = () => {
     }
   };
 
+  const callInformation = {
+    title: "Call Information",
+    call: "incomming", // incomming / outgoing
+    callType: "voice", // voice / video
+    callDuration: "00:00:00",
+    callDate: "2022-01-01",
+    callTime: "00:00:00",
+    to:{
+      name: "John Doe",
+      email: "",
+      prifilePic: '',
+      id: ''
+    },
+    from:{
+      name: "John Doe",
+      email: "",
+      prifilePic: '',
+      id: ''
+    },
+  }
+
   useEffect(() => {
     authenticate();
   }, []);
 
-
-
   return (
-    <main className="w-full h-screen bg-background relative">
+    <main className="w-full h-screen bg-background relative overflow-hidden">
       <Outlet />
-      {/* {loading && (
-        <div className="w-full h-full fixed top-0 left-0 bg-black flex items-center justify-center z-10">
-          <Loader size="40"/>
-        </div>
-      )} */}
       <Toaster />
+      <CallPageLayout />
     </main>
   );
 };

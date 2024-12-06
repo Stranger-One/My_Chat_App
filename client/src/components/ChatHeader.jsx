@@ -1,73 +1,136 @@
 import React, { useState } from "react";
 import { IoIosArrowDown, IoIosArrowUp, IoIosSearch } from "react-icons/io";
-import { IoCallOutline, IoClose, IoVideocamOutline } from "react-icons/io5";
+import {
+  IoCallOutline,
+  IoClose,
+  IoStarOutline,
+  IoVideocamOutline,
+} from "react-icons/io5";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { deleteConversation } from "../services/messageServices";
 import { useSocket } from "../contexts/SocketProvider";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { AiOutlineDelete } from "react-icons/ai";
 import { FaArrowLeft } from "react-icons/fa";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Loader from "./Loader";
+import {
+  setCallActive,
+  setCallDetails,
+  setCallIncomming,
+} from "../store/globalSlice";
+import moment from "moment";
 
 const ChatHeader = ({ user, onlineUsers }) => {
-  const userData = useSelector((state) => state.auth.userData);
+  const userData = useSelector((state) => state.global.userData);
+  const callActive = useSelector((state) => state.global.callActive);
   const [buttonLoading, setButtonLoading] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isOpenMenu, setIsOpenMenu] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const socket = useSocket();
   const conversationId = location?.state?.conversationId;
+  // console.log("user", user);
 
   const handleDeleteConversation = async () => {
     setButtonLoading(true);
-    // console.log("handleDeleteConversation", {
-    //   conversationId
-    // });
-    // Delete conversation logic here
     const response = await deleteConversation(conversationId);
     // console.log("delete response", response);
     navigate("/chat");
-    if (response.success) {
+    if (socket && response.success) {
       toast.success(response.message);
       socket.emit("request-all-conversation", userData?._id);
     }
     setButtonLoading(false);
   };
+
+  // console.log("moment", moment().format("MM/DD/YYYY [at] hh:mm A"));
+  const date = moment().format("DD/MM/YYYY");
+  const time = moment().format("hh:mm A");
+  // console.log(date, time);
+
+  const outgoingCallDetails = {
+    title: "Call Information",
+    call: "incomming", // incomming / outgoing
+    callType: "voice", // voice / video
+    callDate: date,
+    callTime: time,
+    to: {
+      name: user.name,
+      email: user.email,
+      prifilePic: user.profilePic,
+      id: user._id,
+    },
+    from: {
+      name: userData.name,
+      email: userData.email,
+      prifilePic: userData.profilePic,
+      id: userData._id,
+    },
+  };
+
   const handleVoiceCall = () => {
     console.log("handleVoiceCall");
+    dispatch(setCallActive(true));
+
+    dispatch(
+      setCallDetails({
+        ...outgoingCallDetails,
+        callType: "voice",
+        call: "outgoing",
+      })
+    );
   };
+
   const handleVideoCall = () => {
     console.log("handleVideoCall");
+    dispatch(setCallActive(true));
+
+    dispatch(
+      setCallDetails({
+        ...outgoingCallDetails,
+        callType: "video",
+        call: "outgoing",
+      })
+    );
   };
+
   const handleThreeDot = () => {
-    // console.log("handleThreeDot");
     setIsOpenMenu((menu) => !menu);
     setIsSearchOpen(false);
   };
 
+  const call = () => {
+    dispatch(setCallIncomming(true));
+    console.log("incomming call..");
+  };
+
   const linkList = [
-    // {
-    //   path: "",
-    //   icon: IoStarOutline,
-    //   onclick: handleThreeDot()
-    // },
+    {
+      path: "",
+      icon: IoStarOutline,
+      onclick: call,
+    },
     {
       path: "",
       icon: IoCallOutline,
       onclick: handleVoiceCall,
+      disabled: callActive ? true : false,
     },
     {
       path: "",
       icon: IoVideocamOutline,
       onclick: handleVideoCall,
+      disabled: callActive ? true : false,
     },
     {
       path: "",
       icon: BsThreeDotsVertical,
       onclick: handleThreeDot,
+      disabled: false,
     },
   ];
 
@@ -114,7 +177,10 @@ const ChatHeader = ({ user, onlineUsers }) => {
           <button
             onClick={link.onclick}
             key={index}
-            className="p-[6px] bg-surface hover:bg-text hover:text-background duration-150 flex items-center justify-center w-fit rounded-full cursor-pointer"
+            disabled={link.disabled}
+            className={`p-[6px] bg-surface hover:bg-text hover:text-background duration-150 flex items-center justify-center w-fit rounded-full cursor-pointer ${
+              link.disabled ? " bg-text/40" : " "
+            } `}
           >
             <link.icon size={24} className="" />
           </button>

@@ -26,8 +26,8 @@ const FindUser = () => {
   }, [searchQuery]);
 
   return (
-    <div className="w-full h-full relative text-text pt-20">
-      <h1 className="capitalize text-text text-2xl font-semibold w-full text-center mb-10">Find Users You want to chat with</h1>
+    <div className="w-full h-full relative text-text flex flex-col items-center justify-center pb-16">
+      <h1 className="capitalize text-text text-2xl font-semibold w-full text-center mb-4">Find Users You want to chat with</h1>
       <div className="w-[80%] mx-auto flex gap-4 ">
         <div className="flex w-full rounded-md bg-surface items-center px-2 bg-secondary">
           <input

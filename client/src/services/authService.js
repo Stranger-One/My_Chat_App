@@ -59,15 +59,19 @@ export const getUser = async (id) => {
 
 export const checkAuthentication = async (token) => {
     try {
-        const response = await axiosInstant.get("/check-auth", {
-            // withCredentials: true,
-            params: {
-                token
-            }
-        })
+        if(token){
 
-        // console.log(response.data);
-        return response.data
+            const response = await axiosInstant.get("/check-auth", {
+                // withCredentials: true,
+                params: {
+                    token
+                }
+            })
+            
+            // console.log(response.data);
+            return response.data
+        }
+        return null
 
     } catch (error) {
         // console.error(error);

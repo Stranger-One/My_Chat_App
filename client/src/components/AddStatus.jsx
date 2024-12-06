@@ -19,7 +19,7 @@ const AddStatus = () => {
   const [sendingUpdate, setSendingUpdate] = useState(false);
   const [btnBg, setBtnBg] = useState("bg-primary");
   const [fileDuration, setFileDuration] = useState(0)
-  const userData = useSelector((state) => state.auth.userData);
+  const userData = useSelector((state) => state.global.userData);
   const navigate = useNavigate();
   const socket = useSocket();
   const durationRef = useRef();
@@ -109,11 +109,14 @@ const AddStatus = () => {
   }, []);
 
   useEffect(() => {
-    socket.on("add_status", handleAddStatus);
+    if(socket){
+      socket.on("add_status", handleAddStatus);
+      
+      return () => {
+        socket.off("add_status", handleAddStatus);
+      };
+    }
 
-    return () => {
-      socket.off("add_status", handleAddStatus);
-    };
   }, [socket, handleAddStatus]);
 
   return (

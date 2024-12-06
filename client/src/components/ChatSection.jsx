@@ -6,12 +6,12 @@ import {
   findConversation,
   getAllConversation,
 } from "../services/messageServices";
-import { setAllConversation } from "../store/authSlice";
+import { setAllConversation } from "../store/globalSlice";
 import { useSocket } from "../contexts/SocketProvider";
 
 const ChatSection = ({className}) => {
-  const allConversation = useSelector((state) => state.auth.allConversation);
-  const userData = useSelector((state) => state.auth.userData);
+  const allConversation = useSelector((state) => state.global.allConversation);
+  const userData = useSelector((state) => state.global.userData);
   const dispatch = useDispatch();
   const [searchQuery, setSearchQuery] = useState("");
   const socket = useSocket();
@@ -28,7 +28,10 @@ const ChatSection = ({className}) => {
     if(searchQuery){
       handleFindConversations()
     } else {
-      socket.emit("request-all-conversation", userData?._id);
+      if(socket){
+        socket.emit("request-all-conversation", userData?._id);
+      }
+      
     }
   }, [searchQuery]);
 

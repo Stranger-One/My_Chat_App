@@ -7,13 +7,13 @@ import Input from "../Input";
 import toast from "react-hot-toast";
 import { sendVerification, verifyAccount } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
-import { setUserData } from "../../store/authSlice";
+import { setUserData } from "../../store/globalSlice";
 
 const VerifyAccountLayout = () => {
   const [slide, setSlide] = useState(1);
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState('')
-  const userData = useSelector((state) => state.auth.userData);
+  const userData = useSelector((state) => state.global.userData);
   const navigate = useNavigate()
   const dispatch = useDispatch()
 

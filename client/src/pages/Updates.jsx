@@ -15,13 +15,13 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 
 // import required modules
-import { Autoplay, Pagination, Navigation } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 
 const Updates = () => {
   const [messageText, setMessageText] = useState("");
   const [btnBg, setBtnBg] = useState("bg-primary");
   const [sendingUpdate, setSendingUpdate] = useState(false);
-  const allUserStatus = useSelector((state) => state.auth.allUserStatus);
+  const allUserStatus = useSelector((state) => state.global.allUserStatus);
   const params = useParams();
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);

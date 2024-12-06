@@ -6,7 +6,7 @@ import {
   findConversation,
   getAllConversation,
 } from "../services/messageServices";
-import { setAllConversation, setAllUserStatus } from "../store/authSlice";
+import { setAllConversation, setAllUserStatus } from "../store/globalSlice";
 import { useSocket } from "../contexts/SocketProvider";
 import UserStatus from "./UserStatus";
 import { IoIosArrowDown } from "react-icons/io";
@@ -14,8 +14,8 @@ import { getAllStatus } from "../services/UpdateServeces";
 import toast from "react-hot-toast";
 
 const UpdatesSection = ({ className }) => {
-  const userData = useSelector((state) => state.auth.userData);
-  const allUserStatus = useSelector(state => state.auth.allUserStatus)
+  const userData = useSelector((state) => state.global.userData);
+  const allUserStatus = useSelector(state => state.global.allUserStatus)
   const dispatch = useDispatch();
   const socket = useSocket();
   const [unseenStatus, setUnseenStatus] = useState([]);
@@ -43,7 +43,9 @@ const UpdatesSection = ({ className }) => {
 
   useEffect(()=>{
     // fetchUpdates()
-    socket.emit("get_status")
+    if(socket){  
+      socket.emit("get_status")
+    }
   }, [])
 
   const handleGetStatus = useCallback((response)=>{
@@ -53,10 +55,13 @@ const UpdatesSection = ({ className }) => {
 
 
   useEffect(()=>{
-    socket.on("get_status", handleGetStatus)
+    if(socket){
 
-    return ()=>{
-      socket.off("get_status", handleGetStatus)
+      socket.on("get_status", handleGetStatus)
+      
+      return ()=>{
+        socket.off("get_status", handleGetStatus)
+      }
     }
   }, [socket, handleGetStatus])
 

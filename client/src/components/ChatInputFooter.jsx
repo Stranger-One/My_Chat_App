@@ -18,7 +18,7 @@ import { IoPlay } from "react-icons/io5";
 import { IoPause } from "react-icons/io5";
 
 const ChatInputFooter = () => {
-  const userData = useSelector((state) => state.auth.userData);
+  const userData = useSelector((state) => state.global.userData);
   const socket = useSocket();
   const params = useParams();
   const [TextMessage, setTextMessage] = useState("");
@@ -130,7 +130,7 @@ const ChatInputFooter = () => {
     }
 
     try {
-      if (TextMessage || voiceMessage || fileSelected) {
+      if (socket && TextMessage || voiceMessage || fileSelected) {
         socket.emit("send-message", {
           text: TextMessage,
           sender: userData._id,

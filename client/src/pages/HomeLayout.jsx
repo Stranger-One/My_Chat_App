@@ -7,11 +7,11 @@ import {
   setAllConversation,
   setCurrentChatId,
   setOnlineUsers,
-} from "../store/authSlice";
+} from "../store/globalSlice";
 import { useSocket } from "../contexts/SocketProvider";
 
 const HomeLayout = () => {
-  const userData = useSelector((state) => state.auth.userData);
+  const userData = useSelector((state) => state.global.userData);
   const dispatch = useDispatch();
   const params = useParams();
   const socket = useSocket();
@@ -20,26 +20,28 @@ const HomeLayout = () => {
   const handleOnlineUsers = useCallback((data) => {
     console.log("onlineUsers", data);
     dispatch(setOnlineUsers(data));
-  }, []);
+  }, [socket]);
 
   const handleReceiveConversations = useCallback((data) => {
     console.log("all-chats", data);
     dispatch(setAllConversation(data));
-  }, []);
+  }, [socket]);
 
   useEffect(() => {
-    socket.on("onlineUsers", handleOnlineUsers);
+    if (socket) {
+      socket.on("onlineUsers", handleOnlineUsers);
 
-    if (userData) {
-      socket.emit("request-all-conversation", userData?._id);
-      socket.on("receive-all-conversation", handleReceiveConversations);
+      if (userData) {
+        socket.emit("request-all-conversation", userData?._id);
+        socket.on("receive-all-conversation", handleReceiveConversations);
+      }
+
+      return () => {
+        socket.off("receive-all-conversation");
+        socket.off("onlineUsers", handleOnlineUsers);
+        socket.off("receive-all-conversation", handleReceiveConversations);
+      };
     }
-
-    return () => {
-      socket.off("receive-all-conversation");
-      socket.off("onlineUsers", handleOnlineUsers);
-      socket.off("receive-all-conversation", handleReceiveConversations);
-    };
   }, [userData, socket]);
 
   useEffect(() => {

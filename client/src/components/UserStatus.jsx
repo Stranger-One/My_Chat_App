@@ -1,16 +1,12 @@
-import React, { useCallback, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React from "react";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setCurrentChatId } from "../store/authSlice";
-import { useSocket } from "../contexts/SocketProvider";
 import { FiPlus } from "react-icons/fi";
 
 const UserStatus = ({ status, myStatus, index }) => {
-  const userData = useSelector((state) => state.auth.userData);
-  const onlineUsers = useSelector((state) => state.auth.onlineUsers);
+  const userData = useSelector((state) => state.global.userData);
+  const onlineUsers = useSelector((state) => state.global.onlineUsers);
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const socket = useSocket();
 
   // console.log("status", status);
 

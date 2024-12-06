@@ -1,5 +1,6 @@
 import AuthLayout from "./AuthLayout";
 import Call from "./Call";
+import CallPageLayout from "./CallPageLayout";
 import ChatPageLayout from "./ChatPageLayout";
 import EditProfile from "./EditProfile";
 import EmptyPage from "./EmptyPage";
@@ -12,6 +13,7 @@ import Updates from "./Updates";
 
 
 export {
+    CallPageLayout,
     UpdatePageLayout,
     EditProfile,
     ScreenLayout,

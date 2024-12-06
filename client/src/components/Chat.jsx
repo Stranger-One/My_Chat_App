@@ -5,8 +5,8 @@ import { Link, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 const Chat = () => {
-  const onlineUsers = useSelector((state) => state.auth.onlineUsers);
-  const userData = useSelector((state) => state.auth.userData);
+  const onlineUsers = useSelector((state) => state.global.onlineUsers);
+  const userData = useSelector((state) => state.global.userData);
   const [allMessages, setAllMessages] = useState([]);
   const [user, setUser] = useState(null);
   const messagesEndRef = useRef(null);
@@ -61,17 +61,19 @@ const Chat = () => {
   );
 
   useEffect(() => {
-    // Request chat messages when the component mounts or currentChatId changes
-    socket.emit("request-chat-messages", params.userId, userData?._id);
-
-    // Listen for user details
-    socket.on("chat-user-details", handleUserDetails);
-    socket.on("receive-chat-messages", handleReceiveMessages);
-
-    return () => {
-      socket.off("receive-chat-messages", handleReceiveMessages);
-      socket.off("chat-user-details", handleUserDetails);
-    };
+    if(socket){
+      // Request chat messages when the component mounts or currentChatId changes
+      socket.emit("request-chat-messages", params.userId, userData?._id);
+  
+      // Listen for user details
+      socket.on("chat-user-details", handleUserDetails);
+      socket.on("receive-chat-messages", handleReceiveMessages);
+  
+      return () => {
+        socket.off("receive-chat-messages", handleReceiveMessages);
+        socket.off("chat-user-details", handleUserDetails);
+      };
+    }
   }, [socket, params.userId]);
 
   return (

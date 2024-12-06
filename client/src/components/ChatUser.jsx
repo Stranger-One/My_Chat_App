@@ -1,12 +1,12 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setCurrentChatId } from "../store/authSlice";
+import { setCurrentChatId } from "../store/globalSlice";
 import { useSocket } from "../contexts/SocketProvider";
 
 const ChatUser = ({ conversation, setSearchQuery }) => {
-  const userData = useSelector((state) => state.auth.userData);
-  const onlineUsers = useSelector(state => state.auth.onlineUsers)
+  const userData = useSelector((state) => state.global.userData);
+  const onlineUsers = useSelector(state => state.global.onlineUsers)
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const socket = useSocket();
@@ -17,11 +17,13 @@ const ChatUser = ({ conversation, setSearchQuery }) => {
       state: { conversationId: conversation?._id },
     })
     dispatch(setCurrentChatId(conversation?.userDetails?._id))
-    socket.emit("seen", {
-      seenUserId: userData._id,
-      chatUserId: conversation?.userDetails?._id,
-      conversationId: conversation._id
-    })
+    if(socket){
+      socket.emit("seen", {
+        seenUserId: userData._id,
+        chatUserId: conversation?.userDetails?._id,
+        conversationId: conversation._id
+      })
+    }
     setSearchQuery('')
   };
 

@@ -11,18 +11,19 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import ChatSection from "./ChatSection";
 import { useDispatch } from "react-redux";
 import {
+  logout,
   setIsAuthenticated,
   setUserData,
-} from "../store/authSlice";
+} from "../store/globalSlice";
+import { useSocket } from "../contexts/SocketProvider";
 
 const SideBar = () => {
+  const socket = useSocket();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    sessionStorage.removeItem("token");
-    dispatch(setIsAuthenticated(false));
-    dispatch(setUserData(null));
+    dispatch(logout());
     navigate("/");
   };
 
@@ -50,7 +51,7 @@ const SideBar = () => {
   ];
 
   return (
-    <aside className="bg-background overflow-hidden md:h-screen flex flex-col items-center py-2  ">
+    <aside className="bg-background overflow-hidden md:h-screen flex flex-col items-center py-2 boxShadow ">
       <div className="h-7 w-7 hidden md:block rounded-xl bg-primary mt-2 mb-5"></div>
 
       <div className="h-full w-full p-2 flex flex-col justify-between items-center flex-1 ">

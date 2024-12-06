@@ -2,16 +2,18 @@ import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Button, Input, Loader } from "../components";
-import { setIsAuthenticated, setUserData } from "../store/authSlice";
+import { logout, setIsAuthenticated, setUserData } from "../store/globalSlice";
 import { TbPencil } from "react-icons/tb";
 import { FiCamera } from "react-icons/fi";
 import { updateUser } from "../services/authService";
 import toast from "react-hot-toast";
 import uploadToCloudinary from "../services/uploadToCloudinary.js";
 import axios from "axios";
+import { TbLogout } from "react-icons/tb";
+
 
 const Profile = () => {
-  const userData = useSelector((state) => state.auth.userData);
+  const userData = useSelector((state) => state.global.userData);
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [profile, setProfile] = useState("");
@@ -24,9 +26,7 @@ const Profile = () => {
   const [enableAction, setEnableAction] = useState(false);
 
   const handleLogout = () => {
-    sessionStorage.removeItem("token");
-    dispatch(setIsAuthenticated(false));
-    dispatch(setUserData(null));
+    dispatch(logout());
     navigate("/");
   };
 
@@ -101,12 +101,12 @@ const Profile = () => {
     setProfile(userData.profilePic);
     setEnableAction(false);
     setEditName(false);
-    setImageFile(null)
+    setImageFile(null);
   };
 
   const handleSave = async () => {
     setLoading(true);
-    let uploadedImageUrl=null;
+    let uploadedImageUrl = null;
 
     if (imageFile) {
       try {
@@ -122,7 +122,7 @@ const Profile = () => {
         // console.log("upload response", response.data.file.path);
 
         if (response.data.success) {
-          setImageFile(null)
+          setImageFile(null);
           uploadedImageUrl = response.data.file.path;
         } else {
           console.log("Upload failed:", response);
@@ -139,8 +139,8 @@ const Profile = () => {
       name: fullname,
       email: email,
     };
-    if(uploadedImageUrl){
-      data.profilePic = uploadedImageUrl
+    if (uploadedImageUrl) {
+      data.profilePic = uploadedImageUrl;
     }
 
     console.log("finally", data);
@@ -152,7 +152,7 @@ const Profile = () => {
     } else {
       toast.error(response.message);
     }
-    setEnableAction(false)
+    setEnableAction(false);
 
     setLoading(false);
     setEditName(false);
@@ -167,8 +167,10 @@ const Profile = () => {
   }, [userData]);
 
   return (
-    <div className="w-full h-full bg-cover bg-background text-text pt-20">
-      <div className="w-full flex flex-col items-center justify-center">
+    <div className="w-full h-full bg-cover bg-background text-text flex items-center justify-center pb-16">
+      <div className="w-full h-full flex flex-col items-center justify-center  relative ">
+
+        {/* Profile: */}
         <div className="">
           <label htmlFor="file" className="cursor-pointer p-1 ">
             <div
@@ -186,12 +188,6 @@ const Profile = () => {
               <div className="w-10 h-10 absolute bg-primary bottom-0 right-0 rounded-full flex items-center justify-center z-10">
                 <FiCamera size={20} className="text-background" />
               </div>
-
-              {/* {imageUploading && (
-                <div className="absolute top-0 left-0 w-full h-full bg-zinc-600 flex items-center justify-center">
-                  <Loader />
-                </div>
-              )} */}
             </div>
           </label>
           <input
@@ -201,32 +197,8 @@ const Profile = () => {
             id="file"
           />
         </div>
-        {/* <div className="text-center">
-          <h2 className="text-xl font-semibold capitalize leading-tight">
-            {userData?.name || "Username"}
-          </h2>
-          <h2 className="text-lg text-text/70 font-semibold leading-tight">
-            {userData?.email || "rajmeher833@gmail.com"}{" "}
-          </h2>
-          {userData?.verified ? (
-            <h2 className="text-lg text-green-500 font-semibold">Verified</h2>
-          ) : (
-            <div className="">
-              <h2 className="text-lg text-red-500 font-semibold">
-                Your Email Is Not Verified
-              </h2>
-              <p className="text-red-400">
-                <Link
-                  to="verify-account"
-                  className="text-blue-500 hover:underline"
-                >
-                  Verify
-                </Link>{" "}
-                to start messaging{" "}
-              </p>
-            </div>
-          )}
-        </div> */}
+
+        {/*  Email: and  Name: */}
         <div className="flex flex-col gap-1 mt-4">
           <div className="flex items-center justify-start gap-2">
             <label htmlFor="email" className="text-xl font-semibold">
@@ -266,6 +238,7 @@ const Profile = () => {
             )}
           </div>
         </div>
+
         {enableAction && (
           <div className="flex gap-2 mt-10">
             <Button bg="bg-secondary" onClick={handleCancle}>
@@ -276,11 +249,12 @@ const Profile = () => {
             </Button>
           </div>
         )}
-        {/* <div className="flex gap-2 mt-10">
-          <Button bg="bg-secondary" onClick={handleLogout}>
-            Logout
-          </Button>
-        </div> */}
+
+        <div className=" absolute top-2 right-2">
+          <button onClick={handleLogout} className="bg-secondary last:hover:brightness-90 p-2 rounded-lg">
+            <TbLogout size={24} className="text-text" />
+          </button>
+        </div>
       </div>
     </div>
   );

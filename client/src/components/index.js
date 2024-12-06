@@ -6,6 +6,7 @@ import SendOtp from "./auth/SendOtp";
 import VerifyAccount from "./auth/VerifyAccount";
 import VerifyAccountLayout from "./auth/VerifyAccountLayout";
 import Button from "./Button";
+import CallPageFooter from "./CallPageFooter";
 import Chat from "./Chat";
 import ChatHeader from "./ChatHeader";
 import ChatInputFooter from "./ChatInputFooter";
@@ -25,6 +26,7 @@ import UpdatesSection from "./UpdatesSection";
 import UserStatus from "./UserStatus";
 
 export {
+    CallPageFooter,
     ChatHeader,
     SelectedFillePreview,
     ChatInputFooter,

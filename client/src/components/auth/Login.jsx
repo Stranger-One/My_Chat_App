@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { FaArrowLeft } from "react-icons/fa";
 import Cookies from "js-cookie";
 import { useDispatch } from 'react-redux';
-import { setIsAuthenticated, setUserData } from "../../store/authSlice.js";
+import { setIsAuthenticated, setUserData } from "../../store/globalSlice";
 
 const Login = () => {
   const [fullname, setFullname] = useState("");
