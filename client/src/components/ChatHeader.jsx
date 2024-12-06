@@ -16,11 +16,14 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Loader from "./Loader";
 import {
+  setCallAccepted,
   setCallActive,
   setCallDetails,
   setCallIncomming,
 } from "../store/globalSlice";
 import moment from "moment";
+import { useMedia } from "../contexts/mediaProvider";
+import Peer from "peerjs";
 
 const ChatHeader = ({ user, onlineUsers }) => {
   const userData = useSelector((state) => state.global.userData);
@@ -33,29 +36,15 @@ const ChatHeader = ({ user, onlineUsers }) => {
   const dispatch = useDispatch();
   const socket = useSocket();
   const conversationId = location?.state?.conversationId;
-  // console.log("user", user);
-
-  const handleDeleteConversation = async () => {
-    setButtonLoading(true);
-    const response = await deleteConversation(conversationId);
-    // console.log("delete response", response);
-    navigate("/chat");
-    if (socket && response.success) {
-      toast.success(response.message);
-      socket.emit("request-all-conversation", userData?._id);
-    }
-    setButtonLoading(false);
-  };
+  console.log("user", user);
 
   // console.log("moment", moment().format("MM/DD/YYYY [at] hh:mm A"));
   const date = moment().format("DD/MM/YYYY");
   const time = moment().format("hh:mm A");
-  // console.log(date, time);
 
   const outgoingCallDetails = {
-    title: "Call Information",
-    call: "incomming", // incomming / outgoing
-    callType: "voice", // voice / video
+    call: "outgoing",
+    callType: "", // voice / video
     callDate: date,
     callTime: time,
     to: {
@@ -73,29 +62,29 @@ const ChatHeader = ({ user, onlineUsers }) => {
   };
 
   const handleVoiceCall = () => {
-    console.log("handleVoiceCall");
+    console.log("voice call initiating...");
     dispatch(setCallActive(true));
 
-    dispatch(
-      setCallDetails({
-        ...outgoingCallDetails,
-        callType: "voice",
-        call: "outgoing",
-      })
-    );
+    const details = {
+      ...outgoingCallDetails,
+      callType: "voice",
+    };
+    dispatch(setCallDetails(details));
+
+    socket.emit("initiate_call", details);
   };
 
   const handleVideoCall = () => {
-    console.log("handleVideoCall");
+    console.log("Video Call initiating...");
     dispatch(setCallActive(true));
 
-    dispatch(
-      setCallDetails({
-        ...outgoingCallDetails,
-        callType: "video",
-        call: "outgoing",
-      })
-    );
+    const details = {
+      ...outgoingCallDetails,
+      callType: "video",
+    };
+    dispatch(setCallDetails(details));
+
+    socket.emit("initiate_call", details);
   };
 
   const handleThreeDot = () => {
@@ -104,8 +93,7 @@ const ChatHeader = ({ user, onlineUsers }) => {
   };
 
   const call = () => {
-    dispatch(setCallIncomming(true));
-    console.log("incomming call..");
+      
   };
 
   const linkList = [
@@ -133,6 +121,18 @@ const ChatHeader = ({ user, onlineUsers }) => {
       disabled: false,
     },
   ];
+
+  const handleDeleteConversation = async () => {
+    setButtonLoading(true);
+    const response = await deleteConversation(conversationId);
+    // console.log("delete response", response);
+    navigate("/chat");
+    if (socket && response.success) {
+      toast.success(response.message);
+      socket.emit("request-all-conversation", userData?._id);
+    }
+    setButtonLoading(false);
+  };
 
   return (
     <div className="chat-header bg-secondary w-full flex gap-2 items-center px-4 shadow-xl relative">

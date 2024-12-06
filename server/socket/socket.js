@@ -719,6 +719,28 @@ io.on("connection", async (socket) => {
         io.emit("get_status", groupedStatusData)
     })
 
+  
+    socket.on("initiate_call", (details)=>{
+        console.log("initiate_call", details);
+        io.to(details.to.id).emit("incomming_call", details)
+    })
+    
+    socket.on("answer_call", (details)=>{
+        console.log("answer_call", details);
+        io.to(details.from.id).emit("answer_call")
+    })
+    socket.on("decline_call", (details)=>{
+        console.log("decline_call", details);
+        io.to(details.from.id).emit("decline_call")
+    })
+    
+    socket.on("call_end", (details)=>{
+        console.log("call_end", details);
+        io.to(details.from.id).emit("call_end")
+    })
+
+
+
 
 
     socket.on("disconnect", () => {

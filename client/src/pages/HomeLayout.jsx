@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect } from "react";
-import { Outlet, useLocation, useParams } from "react-router-dom";
-import { ChatSection, SideBar } from "../components";
-import io from "socket.io-client";
+import { Outlet, useParams } from "react-router-dom";
+import { SideBar } from "../components";
 import { useDispatch, useSelector } from "react-redux";
 import {
   setAllConversation,
-  setCurrentChatId,
   setOnlineUsers,
 } from "../store/globalSlice";
 import { useSocket } from "../contexts/SocketProvider";
@@ -13,7 +11,6 @@ import { useSocket } from "../contexts/SocketProvider";
 const HomeLayout = () => {
   const userData = useSelector((state) => state.global.userData);
   const dispatch = useDispatch();
-  const params = useParams();
   const socket = useSocket();
   // console.log(socket);
 
@@ -43,14 +40,6 @@ const HomeLayout = () => {
       };
     }
   }, [userData, socket]);
-
-  useEffect(() => {
-    if (params.userId) {
-      dispatch(setCurrentChatId(params.userId));
-    } else {
-      dispatch(setCurrentChatId(null));
-    }
-  }, [params.userId]);
 
   return (
     <div className="w-full h-screen grid grid-rows-[auto_50px] md:grid-cols-[50px_auto]">

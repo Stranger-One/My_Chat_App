@@ -1,3 +1,4 @@
+window.global = window;
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import store from "./store/store.js";
@@ -32,6 +33,7 @@ import {
 import Home from "./pages/Home.jsx";
 import { SocketProvider } from "./contexts/SocketProvider.jsx";
 import AddStatus from "./components/AddStatus.jsx";
+import { MediaProvider } from "./contexts/mediaProvider.jsx";
 
 const router = createBrowserRouter([
   {
@@ -93,7 +95,7 @@ const router = createBrowserRouter([
           {
             path: "updates",
             element: (
-              <ScreenLayout updatesSection >
+              <ScreenLayout updatesSection>
                 <UpdatePageLayout />
               </ScreenLayout>
             ),
@@ -165,7 +167,9 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
     <SocketProvider>
-      <RouterProvider router={router} />
+      <MediaProvider>
+        <RouterProvider router={router} />
+      </MediaProvider>
     </SocketProvider>
   </Provider>
 );

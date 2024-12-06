@@ -5,7 +5,7 @@ import { IoMicOutline } from "react-icons/io5";
 import { useDispatch } from "react-redux";
 import { setCallActive, setCallDetails } from "../store/globalSlice";
 
-const CallPageFooter = ({handleCallEnd}) => {
+const CallPageFooter = ({endCall}) => {
   const dispatch = useDispatch();
 
   const handleMic = () => {};
@@ -36,7 +36,7 @@ const CallPageFooter = ({handleCallEnd}) => {
         </button>
       ))}
       <button
-        onClick={handleCallEnd}
+        onClick={endCall}
         className="py-[6px] px-4 bg-red-500/70 hover:bg-red-500 duration-150 flex items-center justify-center w-fit rounded-full cursor-pointer"
       >
         <MdOutlineCallEnd size={24} className="" />

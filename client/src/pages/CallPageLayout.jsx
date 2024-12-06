@@ -1,22 +1,27 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AiOutlineFullscreenExit } from "react-icons/ai";
 import { AiOutlineFullscreen } from "react-icons/ai";
 import {
+  setCallAccepted,
   setCallActive,
   setCallDetails,
   setCallIncomming,
 } from "../store/globalSlice";
 import { CallPageFooter } from "../components";
+import { useMedia } from "../contexts/mediaProvider";
+import { useSocket } from "../contexts/SocketProvider";
+import Peer from "peerjs";
 
 const CallPageLayout = () => {
   const callActive = useSelector((state) => state.global.callActive);
   const callIncomming = useSelector((state) => state.global.callIncomming);
   const callDetails = useSelector((state) => state.global.callDetails);
+  const callAccepted = useSelector((state) => state.global.callAccepted);
   const [isMinimized, setIsMinimized] = useState(false);
   const dispatch = useDispatch();
   const [duration, setDuration] = useState(0);
-  const [callAnswered, setCallAnswered] = useState(false);
+  const socket = useSocket();
   const intervalRef = useRef(null);
 
   const startDuration = () => {
@@ -25,31 +30,101 @@ const CallPageLayout = () => {
     }, 1000);
   };
 
-  const handleAnswerIncommingCall = () => {
-    dispatch(setCallActive(true));
+  const handleIncommingCall = useCallback(
+    (details) => {
+      console.log("handleCallReceive", {
+        ...details,
+        call: "incomming",
+      });
+
+      dispatch(
+        setCallDetails({
+          ...details,
+          call: "incomming",
+        })
+      );
+
+      dispatch(setCallIncomming(true));
+    },
+    [socket]
+  );
+
+  const handleCallAccepted = useCallback(() => {
+    console.log("call accepted");
+    dispatch(setCallAccepted(true));
+    startDuration();
+  }, []);
+
+  const handleCallRejected = useCallback(() => {
+    dispatch(setCallActive(false));
+    dispatch(setCallDetails(null));
     dispatch(setCallIncomming(false));
-    setCallAnswered(true);
+    console.log("Call Declined");
+  }, []);
+
+  const handleCallEnd = useCallback(() => {
+
+    dispatch(setCallActive(false));
+    dispatch(setCallDetails(null));
+    dispatch(setCallAccepted(false));
+    clearInterval(intervalRef.current);
+    intervalRef.current = null; // Clear the reference 
+    setDuration(0);
+
+    console.log("Call End");
+  }, []);
+
+
+
+  const answerIncommingCall = () => {
+    socket.emit("answer_call", callDetails);
+
+    dispatch(setCallActive(true));
+    dispatch(setCallAccepted(true));
+    dispatch(setCallIncomming(false));
+
     startDuration();
     console.log("Call Answered");
   };
 
-  const handleDeclineIncommingCall = () => {
-    dispatch(setCallIncomming(false));
+  const declineIncommingCall = () => {
+    socket.emit("decline_call", callDetails);
+
+    dispatch(setCallActive(false))
     dispatch(setCallDetails(null));
+    dispatch(setCallIncomming(false));
     console.log("Call Declined");
   };
 
-  const handleCallEnd = () => {
+  const endCall = () => {
+    socket.emit("call_end", callDetails);
+    
     dispatch(setCallActive(false));
     dispatch(setCallDetails(null));
-    setCallAnswered(false);
+    dispatch(setCallAccepted(false));
     clearInterval(intervalRef.current);
-    intervalRef.current = null; // Clear the reference
+    intervalRef.current = null; // Clear the reference 
     setDuration(0);
+
     console.log("Call End");
   };
 
-  // Cleanup on component unmount
+  useEffect(() => {
+    if (socket) {
+      socket.on("incomming_call", handleIncommingCall);
+      socket.on("answer_call", handleCallAccepted);
+      socket.on("decline_call", handleCallRejected);
+      socket.on("call_end", handleCallEnd);
+      
+      return () => {
+        socket.off("incomming_call", handleIncommingCall);
+        socket.off("answer_call", handleCallAccepted);
+        socket.off("decline_call", handleCallRejected);
+        socket.off("call_end", handleCallEnd);
+      };
+    }
+  }, [socket]);
+
   useEffect(() => {
     return () => {
       if (intervalRef.current) {
@@ -61,12 +136,13 @@ const CallPageLayout = () => {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (callIncomming) {
-        handleDeclineIncommingCall();
+        declineIncommingCall();
       }
-    }, 10000);
+    }, 15000);
 
     return () => clearTimeout(timeout);
   }, [callIncomming]);
+
 
   return callIncomming || callActive ? (
     <div className="w-full h-full absolute top-0 left-0 flex items-center justify-center pointer-events-none">
@@ -80,7 +156,6 @@ const CallPageLayout = () => {
           } bg-secondary  
           rounded-lg boxShadow flex flex-col overflow-hidden pointer-events-auto z-50`}
         >
-
           <div className="w-full flex justify-between items-center p-2">
             <h2 className="text-text text-lg ">Let's Chat</h2>
             <div className="flex gap-2">
@@ -103,7 +178,7 @@ const CallPageLayout = () => {
           </div>
 
           <div className="w-full h-full bg-text flex flex-col p-1">
-            <div className="w-full h-full bg-background rounded-lg flex flex-col items-center justify-center">
+            <div className="w-full h-full bg-background rounded-lg flex flex-col items-center justify-center p-4">
               {!isMinimized && (
                 <div
                   className="w-28 h-28 bg-surface rounded-full bg-cover overflow-hidden"
@@ -119,12 +194,44 @@ const CallPageLayout = () => {
                     />
                   )}
                 </div>
+                // <div className="w-full h-full bg-zinc-400 relative">
+                //   {/* remote video */}
+                //   <div className="w-full h-full bg-white">
+                //     {/* {remoteVideo ? (
+                //       <video
+                //         ref={remoteVideoRef}
+                //         autoPlay
+                //         playsInline
+                //         className="w-full h-full object-cover"
+                //       ></video>
+                //     ) : null} */}
+                //   </div>
+                //   {/* my video */}
+                //   <div
+                //     className={`bg-white boxShadow z-10 absolute ${
+                //       callAccepted
+                //         ? "w-[150px] h-[100px] bottom-2 right-2"
+                //         : "w-full h-full bottom-0 right-0"
+                //     } `}
+                //   >
+                //     {/* {stream ? (
+                //       <video
+                //         ref={myVideoRef}
+                //         autoPlay
+                //         playsInline
+                //         className="w-full h-full object-cover"
+                //       ></video>
+                //     ) : null} */}
+                //   </div>
+                // </div>
               )}
               <h2 className="leading-5 capitalize line-clamp-1 font-semibold">
-                {callDetails?.to?.name || "Username"}
+                {callDetails?.call === "incomming"
+                  ? callDetails?.from?.name
+                  : callDetails?.to?.name}
               </h2>
               <p className="leading-5">
-                {callAnswered
+                {callAccepted
                   ? `${
                       duration / 60 < 10
                         ? `0${(duration / 60).toFixed(0)}`
@@ -134,14 +241,14 @@ const CallPageLayout = () => {
                         ? `0${(duration % 60).toFixed(0)}`
                         : (duration % 60).toFixed(0)
                     }`
-                  : callDetails?.call == "outgoing" && !callAnswered
+                  : callDetails?.call == "outgoing" && !callAccepted
                   ? "Ringing..."
-                  : callDetails?.call == "incomming" && !callAnswered
+                  : callDetails?.call == "incomming" && !callAccepted
                   ? "Call End"
                   : null}
               </p>
             </div>
-            <CallPageFooter handleCallEnd={handleCallEnd} />
+            <CallPageFooter endCall={endCall} />
           </div>
         </div>
       ) : null}
@@ -152,17 +259,32 @@ const CallPageLayout = () => {
           <p className="capitalize font-semibold animate-bounce">
             incomming call...
           </p>
-          <div className="w-20 h-20 bg-primary rounded-full"></div>
-          <h2 className="font-semibold">Username</h2>
+          <div
+            className="w-20 h-20 rounded-full bg-cover"
+            style={{
+              backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
+            }}
+          >
+            {callDetails && (
+              <img
+                src={callDetails?.to?.profilePic}
+                alt=""
+                className="object-cover h-full w-full object-center"
+              />
+            )}
+          </div>
+          <h2 className="font-semibold">
+            {callDetails?.from?.name || "Username"}
+          </h2>
           <div className="flex flex-col w-full gap-1 mt-5">
             <button
-              onClick={handleDeclineIncommingCall}
+              onClick={declineIncommingCall}
               className="w-full py-2 text-text border-[1px] border-text rounded-lg hover:font-semibold duration-100"
             >
               Decline
             </button>
             <button
-              onClick={handleAnswerIncommingCall}
+              onClick={answerIncommingCall}
               className="w-full py-2 text-text rounded-lg bg-[#82B2ED] hover:bg-[#82B2ED]/70  hover:font-semibold duration-100"
             >
               Answer

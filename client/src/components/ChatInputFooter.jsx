@@ -71,6 +71,9 @@ const ChatInputFooter = () => {
     mediaRecorderRef.current.stop();
     setIsRecording(false);
     setRecordingDuration(0);
+    setVoiceMsgPlayingDuration(0)
+    setPlayingVoiceMessage(false)
+    
     // console.log("stop recording: voice message", voiceMessage);
   };
 
@@ -240,6 +243,7 @@ const ChatInputFooter = () => {
     console.log("playing....");
     audioTagRef.current.play();
   };
+
   const pauseVoiceMessage = () => {
     console.log("pause....");
     audioTagRef.current.pause();
@@ -287,7 +291,7 @@ const ChatInputFooter = () => {
                 </div>
               ) : (
                 <div className="flex items-center w-full h-full gap-2">
-                  <button onClick={handlePlayPause}>
+                  <button type='button' onClick={handlePlayPause}>
                     {playingVoiceMessage ? (
                       <IoPause size={20} />
                     ) : (
@@ -323,7 +327,7 @@ const ChatInputFooter = () => {
                 </div>
               )}
             </div>
-            <button
+            <button disabled={isRecording} type='button'
               onClick={() => {
                 setVoiceMessage(null);
                 setVoiceBlob(null)

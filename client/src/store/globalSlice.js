@@ -8,12 +8,12 @@ const globalSlice = createSlice({
         loading: true,
         onlineUsers: [],
         allConversation: [],
-        currentChatId: null,
         allUserStatus: [],
-
-        callActive: false,
+        
+        callDetails: null,
         callIncomming: false,
-        callDetails: null
+        callAccepted: false,
+        callActive: false,
     },
     reducers: {
         setUserData: (state, action) => {
@@ -31,20 +31,8 @@ const globalSlice = createSlice({
         setAllConversation: (state, action) => {
             state.allConversation = action.payload;
         },
-        setCurrentChatId: (state, action) => {
-            state.currentChatId = action.payload;
-        },
         setAllUserStatus: (state, action) => {
             state.allUserStatus = action.payload;
-        },
-        setCallIncomming: (state, action)=>{
-            state.callIncomming = action.payload
-        },
-        setCallActive: (state, action)=>{
-            state.callActive = action.payload
-        },
-        setCallDetails: (state, action)=>{
-            state.callDetails = action.payload
         },
         logout: (state, action)=>{
             state.userData = null
@@ -52,9 +40,24 @@ const globalSlice = createSlice({
             state.onlineUsers=[]
             state.allConversation=[]
             sessionStorage.removeItem("token");
-        }
+        },
+
+        setCallDetails: (state, action)=>{
+            state.callDetails = action.payload
+        },
+        setCallIncomming: (state, action)=>{
+            state.callIncomming = action.payload
+        },
+        setCallAccepted: (state, action)=>{
+            state.callAccepted = action.payload
+        },
+        setCallActive: (state, action)=>{
+            state.callActive = action.payload
+        },
+       
     }
 })
 
-export const { setUserData, setIsAuthenticated, setLoading, setOnlineUsers, setAllConversation, setCurrentChatId, setAllUserStatus, setCallIncomming, setCallDetails, logout, setCallActive  } = globalSlice.actions;
+export const { setUserData, setIsAuthenticated, setLoading, setOnlineUsers, setAllConversation, setAllUserStatus, setCallIncomming, setCallDetails, logout, setCallAccepted, setCallActive  } = globalSlice.actions;
+
 export default globalSlice.reducer;

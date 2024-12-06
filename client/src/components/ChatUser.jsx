@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setCurrentChatId } from "../store/globalSlice";
 import { useSocket } from "../contexts/SocketProvider";
 
 const ChatUser = ({ conversation, setSearchQuery }) => {
@@ -16,7 +15,6 @@ const ChatUser = ({ conversation, setSearchQuery }) => {
     navigate(`/chat/${conversation?.userDetails?._id}`, {
       state: { conversationId: conversation?._id },
     })
-    dispatch(setCurrentChatId(conversation?.userDetails?._id))
     if(socket){
       socket.emit("seen", {
         seenUserId: userData._id,
