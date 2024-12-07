@@ -11,7 +11,6 @@ import uploadToCloudinary from "../services/uploadToCloudinary.js";
 import axios from "axios";
 import { TbLogout } from "react-icons/tb";
 
-
 const Profile = () => {
   const userData = useSelector((state) => state.global.userData);
   const [fullname, setFullname] = useState("");
@@ -168,11 +167,10 @@ const Profile = () => {
 
   return (
     <div className="w-full h-full bg-cover bg-background text-text flex items-center justify-center pb-16">
-      <div className="w-full h-full flex flex-col items-center justify-center  relative ">
-
+      <div className="w-full h-full flex flex-col items-center justify-center  relative px-5 ">
         {/* Profile: */}
-        <div className="">
-          <label htmlFor="file" className="cursor-pointer p-1 ">
+        <div className=" flex flex-col item-center justify-center">
+          <label htmlFor="file" className="cursor-pointer p-1 mx-auto">
             <div
               className="w-32 h-32 bg-surface rounded-full relative bg-cover"
               style={{
@@ -199,43 +197,36 @@ const Profile = () => {
         </div>
 
         {/*  Email: and  Name: */}
-        <div className="flex flex-col gap-1 mt-4">
-          <div className="flex items-center justify-start gap-2">
-            <label htmlFor="email" className="text-xl font-semibold">
-              Email:
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-              readOnly
-              className="bg-transparent border-none outline-none px-2 text-lg"
-            />
+        <div className="  mt-4 ">
+          <div className="flex items-center justify-start gap-2 w-fit  mx-auto mt-2">
+            <p className="text-xl w-full">
+              <span className="text-xl font-semibold">Email:</span> {email}
+            </p>
           </div>
-          <div className="flex items-center justify-start gap-2">
-            <label htmlFor="fullname" className="text-xl font-semibold">
+          <div className=" w-fit mx-auto mt-2">
+            <label htmlFor="fullname" className="text-xl font-semibold mr-2">
               Name:
             </label>
-            <input
-              ref={nameInputRef}
-              type="text"
-              name="fullname"
-              value={fullname}
-              onChange={(e) => setFullname(e.target.value)}
-              placeholder="Username"
-              readOnly={editName ? false : true}
-              className="bg-transparent border-none outline-none px-2 text-lg"
-            />
-            {!editName && (
-              <button
-                onClick={handleEdit}
-                className="hover:bg-secondary duration-100 p-2 rounded-full "
-              >
-                <TbPencil size={20} />
-              </button>
-            )}
+            <div className="inline-block">
+              <input
+                ref={nameInputRef}
+                type="text"
+                name="fullname"
+                value={fullname}
+                onChange={(e) => setFullname(e.target.value)}
+                placeholder="Username"
+                readOnly={editName ? false : true}
+                className="bg-transparent border-none outline-none text-lg"
+              />
+              {!editName && (
+                <button
+                  onClick={handleEdit}
+                  className="hover:bg-secondary duration-100 p-2 rounded-full "
+                >
+                  <TbPencil size={20} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -251,7 +242,10 @@ const Profile = () => {
         )}
 
         <div className=" absolute top-2 right-2">
-          <button onClick={handleLogout} className="bg-secondary last:hover:brightness-90 p-2 rounded-lg">
+          <button
+            onClick={handleLogout}
+            className="bg-secondary last:hover:brightness-90 p-2 rounded-lg"
+          >
             <TbLogout size={24} className="text-text" />
           </button>
         </div>
