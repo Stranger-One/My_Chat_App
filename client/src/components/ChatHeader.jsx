@@ -36,6 +36,7 @@ const ChatHeader = ({ user, onlineUsers }) => {
   const dispatch = useDispatch();
   const socket = useSocket();
   const conversationId = location?.state?.conversationId;
+  const {peer, setPeer, myPeerId, setMyPeerId, remotePeerId, setRemotePeerId, stream, setStream, call, setCall, myVideoRef, remoteVideoRef } = useMedia()
   console.log("user", user);
 
   // console.log("moment", moment().format("MM/DD/YYYY [at] hh:mm A"));
@@ -74,17 +75,50 @@ const ChatHeader = ({ user, onlineUsers }) => {
     socket.emit("initiate_call", details);
   };
 
+  // const handleVideoCall = () => {
+  //   console.log("Video Call initiating...");
+  //   dispatch(setCallActive(true));
+
+  //   const details = {
+  //     ...outgoingCallDetails,
+  //     callType: "video",
+  //   };
+  //   dispatch(setCallDetails(details));
+
+  //   socket.emit("initiate_call", details);
+  // };
+
   const handleVideoCall = () => {
-    console.log("Video Call initiating...");
-    dispatch(setCallActive(true));
+    socket.emit("requestPeerId", user._id, (response) => { // Replace "user2" with dynamic user ID
+      if (response.error) {
+        alert(response.error);
+        return;
+      }
+      console.log("Call initiating...");
+      dispatch(setCallActive(true));
 
-    const details = {
-      ...outgoingCallDetails,
-      callType: "video",
-    };
-    dispatch(setCallDetails(details));
+      const details = {
+        ...outgoingCallDetails,
+        callType: "video",
+      };
+      dispatch(setCallDetails(details));
+      socket.emit("initiate_call", details);
 
-    socket.emit("initiate_call", details);
+      const { peerId } = response;
+      setRemotePeerId(peerId);
+
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+        setStream(stream);
+        myVideoRef.current.srcObject = stream;
+        const outgoingCall = peer.call(peerId, stream);
+
+        outgoingCall.on("stream", (remoteStream) => {
+          remoteVideoRef.current.srcObject = remoteStream;
+        });
+
+        setCall(outgoingCall);
+      });
+    });
   };
 
   const handleThreeDot = () => {
@@ -92,22 +126,19 @@ const ChatHeader = ({ user, onlineUsers }) => {
     setIsSearchOpen(false);
   };
 
-  const call = () => {
-      
-  };
 
   const linkList = [
-    {
-      path: "",
-      icon: IoStarOutline,
-      onclick: call,
-    },
-    {
-      path: "",
-      icon: IoCallOutline,
-      onclick: handleVoiceCall,
-      disabled: callActive ? true : false,
-    },
+    // {
+    //   path: "",
+    //   icon: IoStarOutline,
+    //   onclick: startCall,
+    // },
+    // {
+    //   path: "",
+    //   icon: IoCallOutline,
+    //   onclick: handleVoiceCall,
+    //   disabled: callActive ? true : false,
+    // },
     {
       path: "",
       icon: IoVideocamOutline,

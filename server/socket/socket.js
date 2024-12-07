@@ -15,7 +15,7 @@ const io = new Server(server, {
         credentials: true
     }
 })
-
+const users = {}; // Store connected users and their peer IDs
 const onlineUsers = new Set()
 io.on("connection", async (socket) => {
     // ...
@@ -719,25 +719,42 @@ io.on("connection", async (socket) => {
         io.emit("get_status", groupedStatusData)
     })
 
-  
-    socket.on("initiate_call", (details)=>{
+
+    socket.on("initiate_call", (details) => {
         console.log("initiate_call", details);
         io.to(details.to.id).emit("incomming_call", details)
     })
-    
-    socket.on("answer_call", (details)=>{
+
+    socket.on("answer_call", (details) => {
         console.log("answer_call", details);
         io.to(details.from.id).emit("answer_call")
     })
-    socket.on("decline_call", (details)=>{
+    socket.on("decline_call", (details) => {
         console.log("decline_call", details);
         io.to(details.from.id).emit("decline_call")
     })
-    
-    socket.on("call_end", (details)=>{
+
+    socket.on("call_end", (details) => {
         console.log("call_end", details);
-        io.to(details.from.id).emit("call_end")
+        io.to(details.from.id).to(details.to.id).emit("call_end")
     })
+
+
+    // Save the user's peer ID
+    socket.on('registerPeer', ({ userId, peerId }) => {
+        users[userId] = { socketId: socket.id, peerId };
+        console.log('Users:', users);
+    });
+
+    // Handle video call request
+    socket.on('requestPeerId', (targetUserId, callback) => {
+        if (users[targetUserId]) {
+            const { peerId } = users[targetUserId];
+            callback({ peerId });
+        } else {
+            callback({ error: 'User not available' });
+        }
+    });
 
 
 
@@ -748,6 +765,13 @@ io.on("connection", async (socket) => {
         // console.log("socket.handshake", socket.handshake);
         onlineUsers.delete(userDetails?._id)
         io.emit("onlineUsers", Array.from(onlineUsers))
+        for (let userId in users) {
+            if (users[userId].socketId === socket.id) {
+                delete users[userId];
+                break;
+            }
+        }
+        console.log('User disconnected:', socket.id);
     })
 
 });

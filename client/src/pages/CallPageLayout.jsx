@@ -23,6 +23,7 @@ const CallPageLayout = () => {
   const [duration, setDuration] = useState(0);
   const socket = useSocket();
   const intervalRef = useRef(null);
+  const {peer, setPeer, myPeerId, setMyPeerId, remotePeerId, setRemotePeerId, stream, setStream, call, setCall, myVideoRef, remoteVideoRef } = useMedia()
 
   const startDuration = () => {
     intervalRef.current = setInterval(() => {
@@ -64,6 +65,9 @@ const CallPageLayout = () => {
 
   const handleCallEnd = useCallback(() => {
 
+    myVideoRef.current = null
+    remoteVideoRef.current = null
+    setCall(null)
     dispatch(setCallActive(false));
     dispatch(setCallDetails(null));
     dispatch(setCallAccepted(false));
@@ -99,6 +103,9 @@ const CallPageLayout = () => {
   const endCall = () => {
     socket.emit("call_end", callDetails);
     
+    myVideoRef.current = null
+    remoteVideoRef.current = null
+    setCall(null)
     dispatch(setCallActive(false));
     dispatch(setCallDetails(null));
     dispatch(setCallAccepted(false));
@@ -180,50 +187,50 @@ const CallPageLayout = () => {
           <div className="w-full h-full bg-text flex flex-col p-1">
             <div className="w-full h-full bg-background rounded-lg flex flex-col items-center justify-center p-4">
               {!isMinimized && (
-                <div
-                  className="w-28 h-28 bg-surface rounded-full bg-cover overflow-hidden"
-                  style={{
-                    backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
-                  }}
-                >
-                  {callDetails && (
-                    <img
-                      src={callDetails?.to?.profilePic}
-                      alt=""
-                      className="object-cover h-full w-full object-center"
-                    />
-                  )}
-                </div>
-                // <div className="w-full h-full bg-zinc-400 relative">
-                //   {/* remote video */}
-                //   <div className="w-full h-full bg-white">
-                //     {/* {remoteVideo ? (
-                //       <video
-                //         ref={remoteVideoRef}
-                //         autoPlay
-                //         playsInline
-                //         className="w-full h-full object-cover"
-                //       ></video>
-                //     ) : null} */}
-                //   </div>
-                //   {/* my video */}
-                //   <div
-                //     className={`bg-white boxShadow z-10 absolute ${
-                //       callAccepted
-                //         ? "w-[150px] h-[100px] bottom-2 right-2"
-                //         : "w-full h-full bottom-0 right-0"
-                //     } `}
-                //   >
-                //     {/* {stream ? (
-                //       <video
-                //         ref={myVideoRef}
-                //         autoPlay
-                //         playsInline
-                //         className="w-full h-full object-cover"
-                //       ></video>
-                //     ) : null} */}
-                //   </div>
+                // <div
+                //   className="w-28 h-28 bg-surface rounded-full bg-cover overflow-hidden"
+                //   style={{
+                //     backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
+                //   }}
+                // >
+                //   {callDetails && (
+                //     <img
+                //       src={callDetails?.to?.profilePic}
+                //       alt=""
+                //       className="object-cover h-full w-full object-center"
+                //     />
+                //   )}
                 // </div>
+                <div className="w-full h-full md:h-[300px] bg-zinc-400 relative overflow-hidden">
+                  {/* remote video */}
+                  <div className="w-full h-full bg-white overflow-hidden">
+                    {remoteVideoRef ? (
+                      <video
+                        ref={remoteVideoRef}
+                        autoPlay
+                        playsInline
+                        className="w-full h-full object-cover"
+                      ></video>
+                    ) : null}
+                  </div>
+                  {/* my video */}
+                  <div
+                    className={`bg-white boxShadow z-10 absolute ${
+                      callAccepted
+                        ? "w-[150px] h-[100px] bottom-2 right-2"
+                        : "w-full h-full bottom-0 right-0"
+                    } `}
+                  >
+                    {myVideoRef ? (
+                      <video
+                        ref={myVideoRef}
+                        autoPlay
+                        playsInline
+                        className="w-full h-full object-cover"
+                      ></video>
+                    ) : null}
+                  </div>
+                </div>
               )}
               <h2 className="leading-5 capitalize line-clamp-1 font-semibold">
                 {callDetails?.call === "incomming"
