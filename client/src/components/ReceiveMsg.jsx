@@ -6,10 +6,10 @@ const ReceiveMsg = ({ message }) => {
   return (
     <div className="w-full flex justify-start">
       <div
-        className="p-1 max-w-[320px] w-fit rounded-t-lg rounded-bl-lg flex justify-end items-start flex-col"
+        className="p-1 max-w-[310px] w-fit rounded-t-lg rounded-br-lg flex justify-end items-start flex-col bg-green-400"
         style={{
           backgroundImage:
-            "radial-gradient( circle 311px at 8.6% 27.9%,  rgba(62,147,252,0.57) 12.9%, rgba(239,183,192,0.44) 91.2% )",
+            "radial-gradient( circle 311px at 8.6% 27.9%,  rgba(239,183,192,0.44) 12.9%, rgba(62,147,252,0.57) 91.2% )",
         }}
       >
         {message?.file && (

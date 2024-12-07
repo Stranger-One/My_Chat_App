@@ -38,6 +38,7 @@ const ChatInputFooter = () => {
 
   const [voiceMsgPlayingDuration, setVoiceMsgPlayingDuration] = useState(0);
   const audioTagRef = useRef();
+  
 
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
