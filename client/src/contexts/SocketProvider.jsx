@@ -26,7 +26,7 @@ export const SocketProvider = (props) => {
 
       socketInstance.on("connect", () => {
         setIsSocketConnected(true);
-        console.log("Socket connected successfully!");
+        // console.log("Socket connected successfully!");
       });
 
       // socketInstance.on("onlineUsers", (data) => {
@@ -36,7 +36,7 @@ export const SocketProvider = (props) => {
 
       socketInstance.on("disconnect", () => {
         setIsSocketConnected(false);
-        console.log("Socket disconnected.");
+        // console.log("Socket disconnected.");
       });
 
       return socketInstance;
@@ -48,7 +48,7 @@ export const SocketProvider = (props) => {
     if (socket) {
       // Disconnect socket on token removal (logout) or unmount
       socket.on("onlineUsers", (data) => {
-        console.log("onlineUsers", data);
+        // console.log("onlineUsers", data);
         dispatch(setOnlineUsers(data));
       });
 
@@ -56,7 +56,7 @@ export const SocketProvider = (props) => {
         socket.off("onlineUsers");
 
         socket.disconnect();
-        console.log("Socket disconnected on logout.");
+        // console.log("Socket disconnected on logout.");
       };
     }
   }, [socket]);

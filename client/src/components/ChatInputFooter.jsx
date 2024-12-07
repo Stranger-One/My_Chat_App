@@ -88,7 +88,7 @@ const ChatInputFooter = () => {
   };
 
   const handleEmojiSelect = (emoji) => {
-    console.log("emoji", emoji);
+    // console.log("emoji", emoji);
     setTextMessage((prevMessage) => prevMessage + emoji.native);
     setShowEmojiPicker(false); // Hide picker after selection
   };
@@ -240,12 +240,12 @@ const ChatInputFooter = () => {
   };
 
   const playVoiceMessage = () => {
-    console.log("playing....");
+    // console.log("playing....");
     audioTagRef.current.play();
   };
 
   const pauseVoiceMessage = () => {
-    console.log("pause....");
+    // console.log("pause....");
     audioTagRef.current.pause();
   };
 

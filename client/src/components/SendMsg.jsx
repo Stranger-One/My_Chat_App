@@ -8,7 +8,7 @@ const SendMsg = ({ message }) => {
   return (
     <div className="w-full flex justify-end">
       <div
-        className="p-1 max-w-[350px] w-fit rounded-t-lg rounded-bl-lg flex justify-end items-end flex-col"
+        className="p-1 max-w-[320px] w-fit rounded-t-lg rounded-bl-lg flex justify-end items-end flex-col"
         style={{
           backgroundImage:
             "radial-gradient( circle 311px at 8.6% 27.9%,  rgba(62,147,252,0.57) 12.9%, rgba(239,183,192,0.44) 91.2% )",
@@ -39,7 +39,7 @@ const SendMsg = ({ message }) => {
             )}
           </div>
         )}
-        <div className="flex w-full flex-wrap justify-end">
+        <div className="flex w-full flex-wrap justify-between ">
           <p className="text-text leading-[18px] p-1 overflow-hidden">
             {message?.text}
           </p>

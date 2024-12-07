@@ -49,7 +49,7 @@ const UpdatesSection = ({ className }) => {
   }, [])
 
   const handleGetStatus = useCallback((response)=>{
-    console.log("get_status", response);
+    // console.log("get_status", response);
     dispatch(setAllUserStatus(response))
   }, [])
 

@@ -12,7 +12,7 @@ const ScreenLayout = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation()
-  console.log((location.pathname).replace('/', '').replace('-', ' '));
+  // console.log((location.pathname).replace('/', '').replace('-', ' '));
 
   return (
     <div

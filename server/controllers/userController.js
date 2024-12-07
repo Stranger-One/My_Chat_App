@@ -394,7 +394,7 @@ export const updateUser = async (req, res) => {
                 message: "Email is required"
             })
         }
-        console.log(data);
+        // console.log(data);
 
         const updatedUser = await User.findOneAndUpdate({ email }, data, {new: true}).select("email name verified profilePic _id")
         if (!updatedUser) {
@@ -423,7 +423,7 @@ export const updateUser = async (req, res) => {
 export const authenticatedUserDetails = async (req, res) => {
     try {
         const user = req.user;
-        console.log(user);
+        // console.log(user);
 
         const userDetails = await User.findOne({_id: user._id}).select("-password -resetPasswordOtp -resetPasswordOtpExpiresAt -varificationOtp -varificationOtpExpiresAt")
         res.status(200).json({

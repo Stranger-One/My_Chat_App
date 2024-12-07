@@ -22,7 +22,7 @@ const ChatProfile = () => {
   // console.log(location.pathname.replace('/profile', ''));
   return (
     <div className="w-full h-screen grid grid-rows-[60px_auto] bg-cover ">
-      <div className="chat-header bg-secondary shadow-md  w-full flex gap-2 items-center px-4">
+      <div className="chat-header bg-secondary shadow-md w-full flex gap-2 items-center px-4">
         <Link
           to={location.pathname.replace('/profile', '')}
           className="p-2 bg-surface hover:bg-background/70  cursor-pointer rounded-full "

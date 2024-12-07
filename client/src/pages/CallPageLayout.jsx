@@ -51,7 +51,7 @@ const CallPageLayout = () => {
   );
 
   const handleCallAccepted = useCallback(() => {
-    console.log("call accepted");
+    // console.log("call accepted");
     dispatch(setCallAccepted(true));
     startDuration();
   }, []);
@@ -60,7 +60,7 @@ const CallPageLayout = () => {
     dispatch(setCallActive(false));
     dispatch(setCallDetails(null));
     dispatch(setCallIncomming(false));
-    console.log("Call Declined");
+    // console.log("Call Declined");
   }, []);
 
   const handleCallEnd = useCallback(() => {
@@ -75,7 +75,7 @@ const CallPageLayout = () => {
     intervalRef.current = null; // Clear the reference 
     setDuration(0);
 
-    console.log("Call End");
+    // console.log("Call End");
   }, []);
 
 
@@ -88,7 +88,7 @@ const CallPageLayout = () => {
     dispatch(setCallIncomming(false));
 
     startDuration();
-    console.log("Call Answered");
+    // console.log("Call Answered");
   };
 
   const declineIncommingCall = () => {
@@ -97,7 +97,7 @@ const CallPageLayout = () => {
     dispatch(setCallActive(false))
     dispatch(setCallDetails(null));
     dispatch(setCallIncomming(false));
-    console.log("Call Declined");
+    // console.log("Call Declined");
   };
 
   const endCall = () => {
@@ -113,7 +113,7 @@ const CallPageLayout = () => {
     intervalRef.current = null; // Clear the reference 
     setDuration(0);
 
-    console.log("Call End");
+    // console.log("Call End");
   };
 
   useEffect(() => {

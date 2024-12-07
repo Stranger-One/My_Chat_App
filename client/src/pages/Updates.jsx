@@ -35,7 +35,7 @@ const Updates = () => {
     if(duration){
       const animationDuration = Number((duration * 1000).toFixed(0))
       
-      console.log('duration', animationDuration);
+      // console.log('duration', animationDuration);
       setCurStatusDelay(animationDuration)
       document.documentElement.style.setProperty("--animationDuration", `${animationDuration}ms`);
     }
@@ -49,7 +49,7 @@ const Updates = () => {
         navigate("/updates");
       }, animationDuration);
     } 
-    console.log("currentIndex", currentIndex);
+    // console.log("currentIndex", currentIndex);
   }, [params.statusUserId, currentIndex, curStatusUser]);
 
   useEffect(() => {

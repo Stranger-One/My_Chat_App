@@ -721,21 +721,21 @@ io.on("connection", async (socket) => {
 
 
     socket.on("initiate_call", (details) => {
-        console.log("initiate_call", details);
+        // console.log("initiate_call", details);
         io.to(details.to.id).emit("incomming_call", details)
     })
 
     socket.on("answer_call", (details) => {
-        console.log("answer_call", details);
+        // console.log("answer_call", details);
         io.to(details.from.id).emit("answer_call")
     })
     socket.on("decline_call", (details) => {
-        console.log("decline_call", details);
+        // console.log("decline_call", details);
         io.to(details.from.id).emit("decline_call")
     })
 
     socket.on("call_end", (details) => {
-        console.log("call_end", details);
+        // console.log("call_end", details);
         io.to(details.from.id).to(details.to.id).emit("call_end")
     })
 
@@ -743,7 +743,7 @@ io.on("connection", async (socket) => {
     // Save the user's peer ID
     socket.on('registerPeer', ({ userId, peerId }) => {
         users[userId] = { socketId: socket.id, peerId };
-        console.log('Users:', users);
+        // console.log('Users:', users);
     });
 
     // Handle video call request

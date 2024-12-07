@@ -28,7 +28,7 @@ const AddStatus = () => {
     if (durationRef.current) {
       // console.log("durationRef", durationRef.current);
       durationRef.current.addEventListener("loadedmetadata", () => {
-        console.log(durationRef.current.duration);
+        // console.log(durationRef.current.duration);
         setFileDuration(durationRef.current.duration)
       });
     }
@@ -63,11 +63,11 @@ const AddStatus = () => {
     const file = await uploadToCloudinary(data);
     // console.log(file);
 
-    console.log({
-      userId: userData._id,
-      file: file.path,
-      message: messageText,
-    });
+    // console.log({
+    //   userId: userData._id,
+    //   file: file.path,
+    //   message: messageText,
+    // });
 
     const statusDetails = {
       user: userData._id,
@@ -94,7 +94,7 @@ const AddStatus = () => {
   };
 
   const handleAddStatus = useCallback((response) => {
-    console.log(response);
+    // console.log(response);
 
     if (response.success) {
       toast.success(response.message);

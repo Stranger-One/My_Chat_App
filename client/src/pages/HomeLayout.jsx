@@ -29,7 +29,7 @@ const HomeLayout = () => {
 
   const handleOnlineUsers = useCallback(
     (data) => {
-      console.log("onlineUsers", data);
+      // console.log("onlineUsers", data);
       dispatch(setOnlineUsers(data));
     },
     [socket]
@@ -37,7 +37,7 @@ const HomeLayout = () => {
 
   const handleReceiveConversations = useCallback(
     (data) => {
-      console.log("all-chats", data);
+      // console.log("all-chats", data);
       dispatch(setAllConversation(data));
     },
     [socket]

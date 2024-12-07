@@ -37,7 +37,7 @@ const ChatHeader = ({ user, onlineUsers }) => {
   const socket = useSocket();
   const conversationId = location?.state?.conversationId;
   const {peer, setPeer, myPeerId, setMyPeerId, remotePeerId, setRemotePeerId, stream, setStream, call, setCall, myVideoRef, remoteVideoRef } = useMedia()
-  console.log("user", user);
+  // console.log("user", user);
 
   // console.log("moment", moment().format("MM/DD/YYYY [at] hh:mm A"));
   const date = moment().format("DD/MM/YYYY");
@@ -63,7 +63,7 @@ const ChatHeader = ({ user, onlineUsers }) => {
   };
 
   const handleVoiceCall = () => {
-    console.log("voice call initiating...");
+    // console.log("voice call initiating...");
     dispatch(setCallActive(true));
 
     const details = {
@@ -94,7 +94,7 @@ const ChatHeader = ({ user, onlineUsers }) => {
         alert(response.error);
         return;
       }
-      console.log("Call initiating...");
+      // console.log("Call initiating...");
       dispatch(setCallActive(true));
 
       const details = {

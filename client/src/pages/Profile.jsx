@@ -36,7 +36,7 @@ const Profile = () => {
 
   const uploadImageToCloudinary = async () => {
     try {
-      console.log("Uploading to cloudinary...");
+      // console.log("Uploading to cloudinary...");
       setImageUploading(true);
       const data = new FormData();
       data.append("file", imageFile);
@@ -45,7 +45,7 @@ const Profile = () => {
 
       if (response?.data?.success) {
         setProfile(response.data.file.path);
-        console.log("response", response.data.file.path);
+        // console.log("response", response.data.file.path);
       } else {
         console.error(
           "Upload failed:",
@@ -67,7 +67,7 @@ const Profile = () => {
     };
     // console.log("form data", data);
     const response = await updateUser(data);
-    console.log("response", response);
+    // console.log("response", response);
     if (response.success) {
       toast.success(response.message);
       dispatch(setUserData(response.user));
@@ -78,7 +78,7 @@ const Profile = () => {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    console.log("selectedFile", selectedFile);
+    // console.log("selectedFile", selectedFile);
     if (!selectedFile) return;
     setImageFile(selectedFile);
     setEnableAction(true);
@@ -124,7 +124,7 @@ const Profile = () => {
           setImageFile(null);
           uploadedImageUrl = response.data.file.path;
         } else {
-          console.log("Upload failed:", response);
+          // console.log("Upload failed:", response);
         }
         // console.log("Uploading to cloudinary success...", {
         //   uploadedImageUrl
@@ -142,7 +142,7 @@ const Profile = () => {
       data.profilePic = uploadedImageUrl;
     }
 
-    console.log("finally", data);
+    // console.log("finally", data);
     const response = await updateUser(data);
     // console.log("response", response);
     if (response.success) {
