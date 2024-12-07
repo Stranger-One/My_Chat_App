@@ -6,7 +6,7 @@ import { IoSettingsSharp } from "react-icons/io5";
 import { TbLogout2 } from "react-icons/tb";
 import { CgProfile } from "react-icons/cg";
 import { FaUserPlus } from "react-icons/fa";
-
+import gifImage from '../assets/whatsapp.gif'
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import ChatSection from "./ChatSection";
 import { useDispatch } from "react-redux";
@@ -52,7 +52,9 @@ const SideBar = () => {
 
   return (
     <aside className="bg-background overflow-hidden md:h-screen flex flex-col items-center py-2 boxShadow ">
-      <div className="h-7 w-7 hidden md:block rounded-xl bg-primary mt-2 mb-5"></div>
+      <div onClick={()=>navigate('/chat')} className="h-7 w-7 hidden md:block rounded-xl bg-primary mt-2 mb-5 cursor-pointer" >
+        <img src={gifImage} alt="" className="rounded-full" />
+      </div>
 
       <div className="h-full w-full p-2 flex flex-col justify-between items-center flex-1 ">
         <div className="w-full h-full flex justify-evenly md:justify-start md:flex-col gap-2 items-center">

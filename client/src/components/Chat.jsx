@@ -3,6 +3,7 @@ import { ReceiveMsg, ChatInputFooter, ChatHeader, SendMsg } from "./index";
 import { useSocket } from "../contexts/SocketProvider";
 import { Link, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import chatBackground from '../assets/chat-bg.png'
 
 const Chat = () => {
   const onlineUsers = useSelector((state) => state.global.onlineUsers);
@@ -77,7 +78,11 @@ const Chat = () => {
   }, [socket, params.userId]);
 
   return (
-    <div className="w-full h-[calc(100vh-50px)] md:h-screen grid grid-rows-[60px_auto_60px] bg-cover bg-background text-text relative ">
+    <div className="w-full h-[calc(100vh-50px)] md:h-screen grid grid-rows-[60px_auto_60px] bg-cover bg-background text-text relative " 
+    // style={{
+    //   backgroundImage: `url(${backgroundImage})`,
+    // }}
+    >
       {user ? (
         <>
           {/* Chat Header */}

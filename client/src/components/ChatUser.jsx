@@ -43,11 +43,11 @@ const ChatUser = ({ conversation, setSearchQuery }) => {
           backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
         }}
       >
-        <img
+        {conversation?.userDetails?.profilePic && <img
           src={conversation?.userDetails?.profilePic}
           alt=""
           className="object-cover h-full w-full rounded-full"
-        />
+        />}
         {onlineUsers?.includes(conversation?.userDetails?._id) && (
           <div className="absolute w-2 h-2 rounded-full bg-primary bottom-1 right-1"></div>
         )}

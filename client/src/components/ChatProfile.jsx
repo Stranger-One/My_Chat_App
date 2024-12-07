@@ -4,7 +4,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { getUser } from "../services/authService";
 
 const ChatProfile = () => {
-  const location = useLocation()
+  const location = useLocation();
   const params = useParams();
   const [user, setUser] = useState(null);
 
@@ -12,7 +12,6 @@ const ChatProfile = () => {
     const response = await getUser(params.userId);
     // console.log(response);
     setUser(response.user);
-
   };
 
   useEffect(() => {
@@ -24,7 +23,7 @@ const ChatProfile = () => {
     <div className="w-full h-screen grid grid-rows-[60px_auto] bg-cover ">
       <div className="chat-header bg-secondary shadow-md w-full flex gap-2 items-center px-4">
         <Link
-          to={location.pathname.replace('/profile', '')}
+          to={location.pathname.replace("/profile", "")}
           className="p-2 bg-surface hover:bg-background/70  cursor-pointer rounded-full "
         >
           <FaArrowLeft size={20} className="text-text" />
@@ -37,15 +36,17 @@ const ChatProfile = () => {
             backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
           }}
         >
-          <img src={user?.profilePic} alt="" className="object-cover h-full" />
+          {user?.profilePic && (
+            <img
+              src={user?.profilePic}
+              alt=""
+              className="object-cover h-full"
+            />
+          )}
         </div>
         <div className="text-center text-text">
-          <h2 className="text-xl font-semibold capitalize">
-            { user?.name}
-          </h2>
-          <h2 className="text-lg font-semibold">
-            { user?.email}
-          </h2>
+          <h2 className="text-xl font-semibold capitalize">{user?.name}</h2>
+          <h2 className="text-lg font-semibold">{user?.email}</h2>
         </div>
       </div>
     </div>
