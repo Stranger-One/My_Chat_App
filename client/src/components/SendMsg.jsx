@@ -5,6 +5,15 @@ import { LuDownload } from "react-icons/lu";
 
 const SendMsg = ({ message }) => {
   // console.log("message", message);
+
+  const messageTime = new Date(message?.createdAt)
+    .toLocaleTimeString()
+    .split(":");
+  const time = `${
+    messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]
+  }:${messageTime[1]} ${messageTime[2].split(" ")[1]}`;
+  // console.log("message time", time);
+
   return (
     <div className="w-full flex justify-end">
       <div
@@ -44,13 +53,7 @@ const SendMsg = ({ message }) => {
             {message?.text}
           </p>
           <div className="w-fit flex gap-1 items-end">
-            <p className="text-sm text-surface">{`${
-              message?.createdAt.split("T")[1].split(":")[0] > 12
-                ? message?.createdAt.split("T")[1].split(":")[0] - 12
-                : message?.createdAt.split("T")[1].split(":")[0]
-            }:${message?.createdAt.split("T")[1].split(":")[1]} ${
-              message?.createdAt.split("T")[1].split(":")[0] >= 12 ? "PM" : "AM"
-            }`}</p>
+            <p className="text-sm text-surface">{time}</p>
 
             <IoCheckmarkDone
               size={16}

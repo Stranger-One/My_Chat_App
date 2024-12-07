@@ -36,10 +36,11 @@ const messageSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+    createdAt: {
+        type: Number,
     }
 
-}, {
-    timestamps: true
 })
 
 const conversationSchema = new mongoose.Schema({

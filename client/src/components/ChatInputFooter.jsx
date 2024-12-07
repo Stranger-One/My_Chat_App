@@ -16,6 +16,7 @@ import { AiOutlineDelete } from "react-icons/ai";
 import WaveSurfer from "wavesurfer.js";
 import { IoPlay } from "react-icons/io5";
 import { IoPause } from "react-icons/io5";
+import moment from "moment";
 
 const ChatInputFooter = () => {
   const userData = useSelector((state) => state.global.userData);
@@ -94,6 +95,7 @@ const ChatInputFooter = () => {
     setShowEmojiPicker(false); // Hide picker after selection
   };
 
+  // console.log(new Date(Date.now()).toLocaleString());
   // emit send message event
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -148,7 +150,7 @@ const ChatInputFooter = () => {
               : "",
             fileUrl: fileUrl,
             fileSize: fileSelected ? fileSelected?.size : "",
-          },
+          }
         });
 
         // console.log("emit", {

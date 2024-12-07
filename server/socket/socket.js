@@ -147,7 +147,7 @@ io.on("connection", async (socket) => {
                 { sender: userDetails?._id, receiver: _id },
                 { sender: _id, receiver: userDetails?._id }
             ]
-        }).populate("messages").sort({ updateAt: -1 })
+        }).populate("messages").sort({ createdAt: -1 })
         // console.log("conversation", conversation)
 
         socket.emit("receive-chat-messages", conversation)
@@ -161,7 +161,8 @@ io.on("connection", async (socket) => {
             sender: messageDetails?.sender,
             receiver: messageDetails?.receiver,
             text: messageDetails?.text,
-            file: messageDetails?.file
+            file: messageDetails?.file,
+            createdAt: Date.now()
         })
         await message.save()
 
@@ -213,7 +214,7 @@ io.on("connection", async (socket) => {
                     receiver: messageDetails?.sender
                 }
             ]
-        }).populate("messages").sort({ updateAt: -1 })
+        }).populate("messages").sort({ createdAt: -1 })
         // console.log("getConversation", getConversation)
 
         io.to(messageDetails?.sender).to(messageDetails?.receiver).emit("receive-chat-messages", conversation)
