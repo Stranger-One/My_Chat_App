@@ -26,7 +26,7 @@ const CallPageFooter = ({endCall}) => {
 
   return (
     <div className="w-full h-20 flex gap-2 items-center justify-center">
-      {actions.map((item, index) => (
+      {/* {actions.map((item, index) => (
         <button
           onClick={item.onclick}
           key={index}
@@ -34,7 +34,7 @@ const CallPageFooter = ({endCall}) => {
         >
           <item.icon size={24} className="" />
         </button>
-      ))}
+      ))} */}
       <button
         onClick={endCall}
         className="py-[6px] px-4 bg-red-500/70 hover:bg-red-500 duration-150 flex items-center justify-center w-fit rounded-full cursor-pointer"

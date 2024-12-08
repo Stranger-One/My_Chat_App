@@ -166,7 +166,7 @@ const CallPageLayout = () => {
           <div className="w-full flex justify-between items-center p-2">
             <h2 className="text-text text-lg ">Let's Chat</h2>
             <div className="flex gap-2">
-              {!isMinimized ? (
+              {/* {!isMinimized ? (
                 <button
                   onClick={() => setIsMinimized(true)}
                   className="p-1 hover:bg-background rounded-full"
@@ -180,7 +180,7 @@ const CallPageLayout = () => {
                 >
                   <AiOutlineFullscreen size={20} />
                 </button>
-              )}
+              )} */}
             </div>
           </div>
 
