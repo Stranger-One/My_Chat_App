@@ -7,12 +7,16 @@ const SendMsg = ({ message }) => {
   // console.log("message", message);
 
   const messageTime = new Date(message?.createdAt)
-    .toLocaleTimeString("en-US", { hour12: true })
-    .split(":");
-  const time = `${
-    messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]
-  }:${messageTime[1]} ${messageTime[2].split(" ")[1]}`;
-  console.log("message time", time);
+    .toLocaleTimeString("en-US", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+})
+  //   .split(":");
+  // const time = `${
+  //   messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]
+  // }:${messageTime[1]} ${messageTime[2].split(" ")[1]}`;
+  // console.log("message time", time);
 
   return (
     <div className="w-full flex justify-end">
@@ -53,7 +57,7 @@ const SendMsg = ({ message }) => {
             {message?.text}
           </p>
           <div className="w-fit flex gap-1 items-end">
-            <p className="text-sm text-surface">{time}</p>
+            <p className="text-sm text-surface">{messageTime}</p>
 
             <IoCheckmarkDone
               size={16}

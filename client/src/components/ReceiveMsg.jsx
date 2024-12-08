@@ -4,11 +4,15 @@ import { LuDownload } from "react-icons/lu";
 
 const ReceiveMsg = ({ message }) => {
   const messageTime = new Date(message?.createdAt)
-    .toLocaleTimeString("en-US", { hour12: true })
-    .split(":");
-  const time = `${
-    messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]
-  }:${messageTime[1]} ${messageTime[2].split(" ")[1]}`;
+    .toLocaleTimeString("en-US", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+})
+  //   .split(":");
+  // const time = `${
+  //   messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]
+  // }:${messageTime[1]} ${messageTime[2].split(" ")[1]}`;
   // console.log("message time", time);
 
   return (
@@ -50,7 +54,7 @@ const ReceiveMsg = ({ message }) => {
             {message?.text}
           </p>
           <div className="w-fit flex gap-1 items-end">
-            <p className="text-sm text-surface">{time}</p>
+            <p className="text-sm text-surface">{messageTime}</p>
           </div>
         </div>
       </div>

@@ -25,12 +25,16 @@ const ChatUser = ({ conversation, setSearchQuery }) => {
   };
 
   const messageTime = new Date(conversation?.lastMessage?.createdAt)
-    .toLocaleTimeString("en-US", { hour12: true })
-    .split(":");
-  const time = `${
-    messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]
-  }:${messageTime[1]} ${messageTime[2].split(" ")[1]}`;
-  // console.log("message time", time);
+    .toLocaleTimeString("en-US", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+})
+    // .split(":");
+  // const time = `${
+  //   messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]
+  // }:${messageTime[1]} ${messageTime[2].split(" ")[1]}`;
+  // console.log("message time", messageTime);
 
   return (
     <div
@@ -67,7 +71,7 @@ const ChatUser = ({ conversation, setSearchQuery }) => {
             conversation?.unseenMessages > 0 ? "text-text font-bold" : "text-text/70"
           }`}
         >
-          {time}
+          {messageTime}
         </p>
         {conversation?.unseenMessages > 0 && (
           <div className="h-4 w-4 bg-primary rounded-full flex items-center justify-center text-sm">
