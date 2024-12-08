@@ -24,17 +24,13 @@ const ChatUser = ({ conversation, setSearchQuery }) => {
     setSearchQuery("");
   };
 
-  const messageTime = new Date(conversation?.lastMessage?.createdAt)
-    .toLocaleTimeString("en-US", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: true,
-})
-    // .split(":");
-  // const time = `${
-  //   messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]
-  // }:${messageTime[1]} ${messageTime[2].split(" ")[1]}`;
-  // console.log("message time", messageTime);
+  const messageTime = new Date(
+    conversation?.lastMessage?.createdAt
+  ).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   return (
     <div
@@ -47,11 +43,13 @@ const ChatUser = ({ conversation, setSearchQuery }) => {
           backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
         }}
       >
-        {conversation?.userDetails?.profilePic && <img
-          src={conversation?.userDetails?.profilePic}
-          alt=""
-          className="object-cover h-full w-full rounded-full"
-        />}
+        {conversation?.userDetails?.profilePic && (
+          <img
+            src={conversation?.userDetails?.profilePic}
+            alt=""
+            className="object-cover h-full w-full rounded-full"
+          />
+        )}
         {onlineUsers?.includes(conversation?.userDetails?._id) && (
           <div className="absolute w-2 h-2 rounded-full bg-primary bottom-1 right-1"></div>
         )}
@@ -68,7 +66,9 @@ const ChatUser = ({ conversation, setSearchQuery }) => {
       <div className="flex flex-col justify-between items-end h-full">
         <p
           className={`text-sm whitespace-nowrap ${
-            conversation?.unseenMessages > 0 ? "text-text font-bold" : "text-text/70"
+            conversation?.unseenMessages > 0
+              ? "text-text font-bold"
+              : "text-text/70"
           }`}
         >
           {messageTime}

@@ -3,17 +3,11 @@ import { IoCheckmarkDone } from "react-icons/io5";
 import { LuDownload } from "react-icons/lu";
 
 const ReceiveMsg = ({ message }) => {
-  const messageTime = new Date(message?.createdAt)
-    .toLocaleTimeString("en-US", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: true,
-})
-  //   .split(":");
-  // const time = `${
-  //   messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]
-  // }:${messageTime[1]} ${messageTime[2].split(" ")[1]}`;
-  // console.log("message time", time);
+  const messageTime = new Date(message?.createdAt).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   return (
     <div className="w-full flex justify-start">
