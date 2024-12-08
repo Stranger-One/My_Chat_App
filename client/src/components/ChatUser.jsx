@@ -25,7 +25,7 @@ const ChatUser = ({ conversation, setSearchQuery }) => {
   };
 
   const messageTime = new Date(conversation?.lastMessage?.createdAt)
-    .toLocaleTimeString()
+    .toLocaleTimeString("en-US", { hour12: true })
     .split(":");
   const time = `${
     messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]

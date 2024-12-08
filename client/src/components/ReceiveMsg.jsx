@@ -4,7 +4,7 @@ import { LuDownload } from "react-icons/lu";
 
 const ReceiveMsg = ({ message }) => {
   const messageTime = new Date(message?.createdAt)
-    .toLocaleTimeString()
+    .toLocaleTimeString("en-US", { hour12: true })
     .split(":");
   const time = `${
     messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]

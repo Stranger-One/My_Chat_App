@@ -7,12 +7,12 @@ const SendMsg = ({ message }) => {
   // console.log("message", message);
 
   const messageTime = new Date(message?.createdAt)
-    .toLocaleTimeString()
+    .toLocaleTimeString("en-US", { hour12: true })
     .split(":");
   const time = `${
     messageTime[0] < 10 ? `0${messageTime[0]}` : messageTime[0]
   }:${messageTime[1]} ${messageTime[2].split(" ")[1]}`;
-  // console.log("message time", time);
+  console.log("message time", time);
 
   return (
     <div className="w-full flex justify-end">
