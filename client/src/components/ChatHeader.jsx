@@ -62,18 +62,18 @@ const ChatHeader = ({ user, onlineUsers }) => {
     },
   };
 
-  const handleVoiceCall = () => {
-    // console.log("voice call initiating...");
-    dispatch(setCallActive(true));
+  // const handleVoiceCall = () => {
+  //   // console.log("voice call initiating...");
+  //   dispatch(setCallActive(true));
 
-    const details = {
-      ...outgoingCallDetails,
-      callType: "voice",
-    };
-    dispatch(setCallDetails(details));
+  //   const details = {
+  //     ...outgoingCallDetails,
+  //     callType: "voice",
+  //   };
+  //   dispatch(setCallDetails(details));
 
-    socket.emit("initiate_call", details);
-  };
+  //   socket.emit("initiate_call", details);
+  // };
 
   // const handleVideoCall = () => {
   //   console.log("Video Call initiating...");
@@ -89,34 +89,42 @@ const ChatHeader = ({ user, onlineUsers }) => {
   // };
 
   const handleVideoCall = () => {
-    socket.emit("requestPeerId", user._id, (response) => { // Replace "user2" with dynamic user ID
+    socket.emit("requestPeerId", user._id, (response) => { 
       if (response.error) {
-        alert(response.error);
+        toast.error(response.error)
         return;
       }
-      // console.log("Call initiating...");
-      dispatch(setCallActive(true));
+      console.log("Call initiating...", response);
 
+      dispatch(setCallActive(true));
       const details = {
         ...outgoingCallDetails,
         callType: "video",
       };
-      dispatch(setCallDetails(details));
-      socket.emit("initiate_call", details);
 
+      dispatch(setCallDetails(details));
+      // socket.emit("initiate_call", details);
       const { peerId } = response;
       setRemotePeerId(peerId);
 
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then( async(stream) => {
         setStream(stream);
         myVideoRef.current.srcObject = stream;
-        const outgoingCall = peer.call(peerId, stream);
+        console.log("local stream", stream);
+        const outgoingCall = await peer.call(peerId, stream, {
+          metadata: {
+            callerDetails: details
+          },
+        });
+        console.log("outgoingCall", outgoingCall);
 
         outgoingCall.on("stream", (remoteStream) => {
           remoteVideoRef.current.srcObject = remoteStream;
+          console.log("remoteStream", remoteStream);
         });
 
         setCall(outgoingCall);
+        console.log("call outgoing...");
       });
     });
   };

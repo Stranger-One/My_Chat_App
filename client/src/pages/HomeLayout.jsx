@@ -48,29 +48,22 @@ const HomeLayout = () => {
       // Initialize PeerJS
       const newPeer = new Peer();
       setPeer(newPeer);
-
       newPeer.on("open", (id) => {
         setMyPeerId(id);
-        socket.emit("registerPeer", { userId: userData._id, peerId: id }); // Replace "user1" with dynamic user ID
+        socket.emit("registerPeer", { userId: userData._id, peerId: id }); 
       });
 
-      newPeer.on("call", (incomingCall) => {
-        navigator.mediaDevices
-          .getUserMedia({ video: true, audio: true })
-          .then((stream) => {
-            setStream(stream);
-            myVideoRef.current.srcObject = stream
-            incomingCall.answer(stream);
-
-            incomingCall.on("stream", (remoteStream) => {
-              remoteVideoRef.current.srcObject = remoteStream;
-            });
-          });
-      });
-
-      return () => newPeer.destroy();
+      
     }
   }, [socket, userData]);
+
+  useEffect(()=>{
+    return () => {
+      console.log("peer destroy")
+      peer.destroy();
+      setPeer(null);
+    }
+  }, [])
 
   useEffect(() => {
     if (socket) {

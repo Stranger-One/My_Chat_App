@@ -14,6 +14,7 @@ import { useSocket } from "../contexts/SocketProvider";
 import Peer from "peerjs";
 
 const CallPageLayout = () => {
+  const userData = useSelector((state) => state.global.userData);
   const callActive = useSelector((state) => state.global.callActive);
   const callIncomming = useSelector((state) => state.global.callIncomming);
   const callDetails = useSelector((state) => state.global.callDetails);
@@ -23,7 +24,23 @@ const CallPageLayout = () => {
   const [duration, setDuration] = useState(0);
   const socket = useSocket();
   const intervalRef = useRef(null);
-  const {peer, setPeer, myPeerId, setMyPeerId, remotePeerId, setRemotePeerId, stream, setStream, call, setCall, myVideoRef, remoteVideoRef } = useMedia()
+  const {
+    peer,
+    setPeer,
+    myPeerId,
+    setMyPeerId,
+    remotePeerId,
+    setRemotePeerId,
+    stream,
+    setStream,
+    call,
+    setCall,
+    myVideoRef,
+    remoteVideoRef,
+  } = useMedia();
+
+  const [incommingCallDetails, setIncommingCallDetails] = useState(null);
+  const [incomingCall, setIncomingCall] = useState();
 
   const startDuration = () => {
     intervalRef.current = setInterval(() => {
@@ -33,19 +50,16 @@ const CallPageLayout = () => {
 
   const handleIncommingCall = useCallback(
     (details) => {
-      console.log("handleCallReceive", {
-        ...details,
-        call: "incomming",
-      });
-
-      dispatch(
-        setCallDetails({
-          ...details,
-          call: "incomming",
-        })
-      );
-
-      dispatch(setCallIncomming(true));
+      // console.log("handleCallReceive", {
+      //   ...details,
+      //   call: "incomming",
+      // });
+      // dispatch(
+      //   setCallDetails({
+      //     ...details,
+      //     call: "incomming",
+      //   })
+      // );
     },
     [socket]
   );
@@ -57,74 +71,108 @@ const CallPageLayout = () => {
   }, []);
 
   const handleCallRejected = useCallback(() => {
+    setRemotePeerId(null);
+    setStream(null);
+    myVideoRef.current.srcObject=null
+
+    
     dispatch(setCallActive(false));
     dispatch(setCallDetails(null));
-    dispatch(setCallIncomming(false));
-    // console.log("Call Declined");
+    console.log("Call Declined");
   }, []);
 
   const handleCallEnd = useCallback(() => {
-
-    myVideoRef.current = null
-    remoteVideoRef.current = null
-    setCall(null)
+    myVideoRef.current.srcObject = undefined;
+    remoteVideoRef.current.srcObject = undefined;
+    setCall(null);
+    setStream(null)
     dispatch(setCallActive(false));
     dispatch(setCallDetails(null));
     dispatch(setCallAccepted(false));
     clearInterval(intervalRef.current);
-    intervalRef.current = null; // Clear the reference 
+    intervalRef.current = null; // Clear the reference
     setDuration(0);
 
     // console.log("Call End");
   }, []);
 
-
-
   const answerIncommingCall = () => {
-    socket.emit("answer_call", callDetails);
+    console.log("incoming call answer", incomingCall);
+    dispatch(setCallDetails({
+      ...incommingCallDetails,
+      call: "incomming",
+    }));
 
-    dispatch(setCallActive(true));
-    dispatch(setCallAccepted(true));
+    socket.emit("answer_call", incommingCallDetails);
+
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: true })
+      .then((stream) => {
+        setStream(stream);
+        myVideoRef.current.srcObject = stream;
+        incomingCall.answer(stream);
+
+
+        incomingCall?.on("stream", (remoteStream) => {
+          remoteVideoRef.current.srcObject = remoteStream;
+        });
+      });
+      
+      dispatch(setCallAccepted(true));
+      dispatch(setCallActive(true));
     dispatch(setCallIncomming(false));
 
     startDuration();
     // console.log("Call Answered");
   };
 
-  const declineIncommingCall = () => {
-    socket.emit("decline_call", callDetails);
 
-    dispatch(setCallActive(false))
-    dispatch(setCallDetails(null));
+  const declineIncommingCall = () => {
+    console.log("declineIncommingCall", incomingCall);
+    socket.emit("decline_call", incommingCallDetails);
+    setIncommingCallDetails(null);
+    setIncomingCall(null);
     dispatch(setCallIncomming(false));
+
+    // dispatch(setCallDetails(null));
     // console.log("Call Declined");
   };
 
   const endCall = () => {
-    socket.emit("call_end", callDetails);
-    
-    myVideoRef.current = null
-    remoteVideoRef.current = null
-    setCall(null)
-    dispatch(setCallActive(false));
-    dispatch(setCallDetails(null));
-    dispatch(setCallAccepted(false));
-    clearInterval(intervalRef.current);
-    intervalRef.current = null; // Clear the reference 
-    setDuration(0);
+    socket.emit("call_end", incommingCallDetails);
+
+    // myVideoRef.current.srcObject = null;
+    // remoteVideoRef.current.srcObject = null;
+    // setCall(null);
+    // dispatch(setCallActive(false));
+    // dispatch(setCallDetails(null));
+    // dispatch(setCallAccepted(false));
+    // setStream(null);
+
+    // clearInterval(intervalRef.current);
+    // intervalRef.current = null; // Clear the reference
+    // setDuration(0);
 
     // console.log("Call End");
   };
 
+  peer?.on("call", (incomingCall) => {
+    console.log("incomingCall", incomingCall);
+    const callDetails = incomingCall?.metadata?.callerDetails;
+    setIncommingCallDetails(callDetails);
+    setIncomingCall(incomingCall);
+    dispatch(setCallIncomming(true));
+  });
+
   useEffect(() => {
     if (socket) {
-      socket.on("incomming_call", handleIncommingCall);
+      // socket.on("incomming_call", handleIncommingCall);
       socket.on("answer_call", handleCallAccepted);
       socket.on("decline_call", handleCallRejected);
       socket.on("call_end", handleCallEnd);
-      
+
       return () => {
-        socket.off("incomming_call", handleIncommingCall);
+        // socket.off("incomming_call", handleIncommingCall);
         socket.off("answer_call", handleCallAccepted);
         socket.off("decline_call", handleCallRejected);
         socket.off("call_end", handleCallEnd);
@@ -140,16 +188,15 @@ const CallPageLayout = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (callIncomming) {
-        declineIncommingCall();
-      }
-    }, 15000);
+  // useEffect(() => {
+  //   const timeout = setTimeout(() => {
+  //     if (callIncomming) {
+  //       declineIncommingCall();
+  //     }
+  //   }, 15000);
 
-    return () => clearTimeout(timeout);
-  }, [callIncomming]);
-
+  //   return () => clearTimeout(timeout);
+  // }, [callIncomming]);
 
   return callIncomming || callActive ? (
     <div className="w-full h-full absolute top-0 left-0 flex items-center justify-center pointer-events-none">
