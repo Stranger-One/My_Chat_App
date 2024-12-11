@@ -78,7 +78,7 @@ const CallPageLayout = () => {
     
     dispatch(setCallActive(false));
     dispatch(setCallDetails(null));
-    console.log("Call Declined");
+    // console.log("Call Declined");
   }, []);
 
   const handleCallEnd = useCallback(() => {
@@ -97,7 +97,7 @@ const CallPageLayout = () => {
   }, []);
 
   const answerIncommingCall = () => {
-    console.log("incoming call answer", incomingCall);
+    // console.log("incoming call answer", incomingCall);
     dispatch(setCallDetails({
       ...incommingCallDetails,
       call: "incomming",
@@ -128,7 +128,7 @@ const CallPageLayout = () => {
 
 
   const declineIncommingCall = () => {
-    console.log("declineIncommingCall", incomingCall);
+    // console.log("declineIncommingCall", incomingCall);
     socket.emit("decline_call", incommingCallDetails);
     setIncommingCallDetails(null);
     setIncomingCall(null);
@@ -157,7 +157,7 @@ const CallPageLayout = () => {
   };
 
   peer?.on("call", (incomingCall) => {
-    console.log("incomingCall", incomingCall);
+    // console.log("incomingCall", incomingCall);
     const callDetails = incomingCall?.metadata?.callerDetails;
     setIncommingCallDetails(callDetails);
     setIncomingCall(incomingCall);

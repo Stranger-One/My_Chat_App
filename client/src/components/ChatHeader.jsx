@@ -94,7 +94,7 @@ const ChatHeader = ({ user, onlineUsers }) => {
         toast.error(response.error)
         return;
       }
-      console.log("Call initiating...", response);
+      // console.log("Call initiating...", response);
 
       dispatch(setCallActive(true));
       const details = {
@@ -110,21 +110,21 @@ const ChatHeader = ({ user, onlineUsers }) => {
       navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then( async(stream) => {
         setStream(stream);
         myVideoRef.current.srcObject = stream;
-        console.log("local stream", stream);
+        // console.log("local stream", stream);
         const outgoingCall = await peer.call(peerId, stream, {
           metadata: {
             callerDetails: details
           },
         });
-        console.log("outgoingCall", outgoingCall);
+        // console.log("outgoingCall", outgoingCall);
 
         outgoingCall.on("stream", (remoteStream) => {
           remoteVideoRef.current.srcObject = remoteStream;
-          console.log("remoteStream", remoteStream);
+          // console.log("remoteStream", remoteStream);
         });
 
         setCall(outgoingCall);
-        console.log("call outgoing...");
+        // console.log("call outgoing...");
       });
     });
   };

@@ -21,7 +21,7 @@ const CallPageFooter = ({endCall}) => {
     if (stream) {
       const videoTrack = stream.getVideoTracks()[0];
       videoTrack.enabled = !videoTrack.enabled;
-      console.log(videoTrack.enabled);
+      // console.log(videoTrack.enabled);
       setIsVideoMuted(!videoTrack.enabled);
     }
   };
@@ -30,7 +30,7 @@ const CallPageFooter = ({endCall}) => {
     if (stream) {
       const audioTrack = stream.getAudioTracks()[0];
       audioTrack.enabled = !audioTrack.enabled;
-      console.log(audioTrack.enabled);
+      // console.log(audioTrack.enabled);
       setIsAudioMuted(!audioTrack.enabled);
     }
   };

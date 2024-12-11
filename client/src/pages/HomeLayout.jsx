@@ -52,14 +52,12 @@ const HomeLayout = () => {
         setMyPeerId(id);
         socket.emit("registerPeer", { userId: userData._id, peerId: id }); 
       });
-
-      
     }
   }, [socket, userData]);
 
   useEffect(()=>{
     return () => {
-      console.log("peer destroy")
+      // console.log("peer destroy")
       peer.destroy();
       setPeer(null);
     }
