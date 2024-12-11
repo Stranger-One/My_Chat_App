@@ -56,12 +56,15 @@ const HomeLayout = () => {
   }, [socket, userData]);
 
   useEffect(()=>{
-    return () => {
-      // console.log("peer destroy")
-      peer.destroy();
-      setPeer(null);
+    if(peer){
+
+      return () => {
+        // console.log("peer destroy")
+        peer.destroy();
+        setPeer(null);
+      }
     }
-  }, [])
+  }, [peer])
 
   useEffect(() => {
     if (socket) {
