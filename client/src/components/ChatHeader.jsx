@@ -51,13 +51,13 @@ const ChatHeader = ({ user, onlineUsers }) => {
     to: {
       name: user.name,
       email: user.email,
-      prifilePic: user.profilePic,
+      profilePic: user.profilePic,
       id: user._id,
     },
     from: {
       name: userData.name,
       email: userData.email,
-      prifilePic: userData.profilePic,
+      profilePic: userData.profilePic,
       id: userData._id,
     },
   };

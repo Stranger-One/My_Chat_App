@@ -319,16 +319,16 @@ const CallPageLayout = () => {
               backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
             }}
           >
-            {callDetails && (
+            {incommingCallDetails && (
               <img
-                src={callDetails?.to?.profilePic}
+                src={incommingCallDetails?.from?.profilePic}
                 alt=""
                 className="object-cover h-full w-full object-center"
               />
             )}
           </div>
           <h2 className="font-semibold">
-            {callDetails?.from?.name || "Username"}
+            {incommingCallDetails?.from?.name || "Username"}
           </h2>
           <div className="flex flex-col w-full gap-1 mt-5">
             <button
