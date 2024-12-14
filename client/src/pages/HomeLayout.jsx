@@ -57,7 +57,6 @@ const HomeLayout = () => {
 
   useEffect(()=>{
     if(peer){
-
       return () => {
         // console.log("peer destroy")
         peer.destroy();

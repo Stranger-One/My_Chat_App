@@ -6,6 +6,8 @@ import User from '../models/userModel.js'
 import { Conversation, Message } from '../models/conversationModel.js'
 import mongoose from 'mongoose'
 import Status from '../models/StatusModel.js'
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express()
 const server = createServer(app)
@@ -15,10 +17,11 @@ const io = new Server(server, {
         credentials: true
     }
 })
+
 const users = {}; // Store connected users and their peer IDs
 const onlineUsers = new Set()
+
 io.on("connection", async (socket) => {
-    // ...
     console.log("Client connected", socket.id);
     // console.log("socket.handshake", socket.handshake);
 

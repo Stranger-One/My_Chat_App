@@ -11,8 +11,8 @@ export const useSocket = () => {
 };
 
 export const SocketProvider = (props) => {
-  const token = JSON.parse(sessionStorage.getItem("token")); // Retrieve token from sessionStorage
-  const userData = useSelector((state) => state.global.userData); // Get user data from Redux
+  const token = JSON.parse(sessionStorage.getItem("token"));
+  const userData = useSelector((state) => state.global.userData); 
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const dispatch = useDispatch();
 
@@ -26,7 +26,11 @@ export const SocketProvider = (props) => {
 
       socketInstance.on("connect", () => {
         setIsSocketConnected(true);
-        // console.log("Socket connected successfully!");
+        console.log("Socket connected successfully!");
+      });
+
+      socketInstance.on('connect_error', (error) => {
+        console.error('Connection error:', error);
       });
 
       // socketInstance.on("onlineUsers", (data) => {
