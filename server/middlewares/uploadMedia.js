@@ -12,12 +12,6 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_SECRET_KEY
 })
 
-// cloudinary.config({
-//     cloud_name: 'dolamani-cloudinary',
-//     api_key: '928516586877218',
-//     api_secret: 'xKntkfqTyGy2-eTcJbMu6jtSt6Y'
-// });
-
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: async (req, file) => {
