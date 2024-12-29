@@ -103,6 +103,7 @@ const ChatHeader = ({ user, onlineUsers }) => {
       };
 
       dispatch(setCallDetails(details));
+      // console.log("details", details);
       // socket.emit("initiate_call", details);
       const { peerId } = response;
       setRemotePeerId(peerId);

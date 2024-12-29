@@ -82,6 +82,7 @@ const CallPageLayout = () => {
   }, []);
 
   const handleCallEnd = useCallback(() => {
+    // console.log("call end :: call details ::", callDetails, duration);
     myVideoRef.current.srcObject = undefined;
     remoteVideoRef.current.srcObject = undefined;
     setCall(null);
@@ -139,21 +140,9 @@ const CallPageLayout = () => {
   };
 
   const endCall = () => {
-    socket.emit("call_end", incommingCallDetails);
+    // socket.emit("call_end", incommingCallDetails);
+    console.log("end call :: duration :: ", duration);
 
-    // myVideoRef.current.srcObject = null;
-    // remoteVideoRef.current.srcObject = null;
-    // setCall(null);
-    // dispatch(setCallActive(false));
-    // dispatch(setCallDetails(null));
-    // dispatch(setCallAccepted(false));
-    // setStream(null);
-
-    // clearInterval(intervalRef.current);
-    // intervalRef.current = null; // Clear the reference
-    // setDuration(0);
-
-    // console.log("Call End");
   };
 
   peer?.on("call", (incomingCall) => {

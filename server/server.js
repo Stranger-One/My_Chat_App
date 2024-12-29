@@ -8,6 +8,7 @@ import userRouter from './routers/userRouter.js';
 import uploadMediaRouter from './routers/uploadMediaRouter.js';
 import conversationRouter from './routers/conversationRouter.js'
 import statusRouter from './routers/statusRouter.js';
+import callRouter from './routers/callRouter.js';
 
 
 import { app, server } from "./socket/socket.js";
@@ -34,5 +35,6 @@ app.use('/api/auth', userRouter)
 app.use('/api/upload', uploadMediaRouter)
 app.use('/api/message', conversationRouter)
 app.use('/api/status', statusRouter)
+app.use('/api/call', callRouter)
 
 server.listen(port, () => console.log(`server is running at port ${port}`));
