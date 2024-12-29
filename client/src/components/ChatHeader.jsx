@@ -32,24 +32,14 @@ const ChatHeader = ({ user, onlineUsers }) => {
   const socket = useSocket();
   const {
     peer,
-    setPeer,
-    myPeerId,
-    setMyPeerId,
-    remotePeerId,
     setRemotePeerId,
-    stream,
     setStream,
-    call,
-    setCall,
     myVideoRef,
     remoteVideoRef,
-    duration,
     startTimer,
-    stopTimer
   } = useMedia();
   const conversationId = location?.state?.conversationId;
 
-  // console.log("moment", moment().format("MM/DD/YYYY [at] hh:mm A"));
   const date = moment().format("YYYY-MM-DD");
   const time = moment().format("hh:mm A");
 
@@ -70,50 +60,45 @@ const ChatHeader = ({ user, onlineUsers }) => {
     },
   };
 
-  const handleVideoCall = () => {
-    console.log("start video call... ", callDetails);
-    // socket.emit("initiate_call", callDetails);
-
-    dispatch(setCallDetails(callDetails));
-    dispatch(setCallActive(true));
-    dispatch(setCallStatus("Ringing..."));
-
-    socket.emit("requestPeerId", user._id, (response) => {
+  const handleVideoCall = async () => {
+    // console.log("start video call... ", callDetails);
+    
+    socket.emit("requestPeerId", user._id, async (response) => {
       if (response.error) {
         toast.error(response.error);
         return;
       }
-
+      
+      dispatch(setCallDetails(callDetails));
+      dispatch(setCallActive(true));
+      dispatch(setCallStatus("Ringing..."));
       const { peerId } = response;
       setRemotePeerId(peerId);
 
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: false })
-        .then(async (stream) => {
-          setStream(stream);
-          myVideoRef.current.srcObject = stream;
-          // console.log("local stream", stream);
-          const outgoingCall = await peer.call(peerId, stream, {
-            metadata: {
-              callDetails,
-            },
-          });
-          console.log("outgoingCall...", stream);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        setStream(stream);
+        myVideoRef.current.srcObject = stream;
 
-          outgoingCall.on("stream", (remoteStream) => {
-            console.log("answered...", remoteStream);
-            remoteVideoRef.current.srcObject = remoteStream;
-
-            dispatch(setCallIncomming(false));
-            dispatch(setCallActive(true));
-            dispatch(setCallAccepted(true));
-            dispatch(setCallStatus("Answered"));
-            startTimer()
-          });
-
-          // setCall(outgoingCall);
-          // console.log("call outgoing...");
+        const outgoingCall = await peer.call(peerId, stream, {
+          metadata: {
+            callDetails,
+          },
         });
+
+        outgoingCall.on("stream", (remoteStream) => {
+          remoteVideoRef.current.srcObject = remoteStream;
+          dispatch(setCallIncomming(false));
+          dispatch(setCallActive(true));
+          dispatch(setCallAccepted(true));
+          dispatch(setCallStatus("Answered"));
+          startTimer();
+        });
+
+      } catch (error) {
+        console.error("Error accessing media devices.", error);
+        toast.error("Error accessing media devices.");
+      }
     });
   };
 
@@ -127,7 +112,7 @@ const ChatHeader = ({ user, onlineUsers }) => {
       path: "",
       icon: IoVideocamOutline,
       onclick: handleVideoCall,
-      disabled: callActive ? true : false,
+      disabled: callActive,
     },
     {
       path: "",
@@ -139,14 +124,19 @@ const ChatHeader = ({ user, onlineUsers }) => {
 
   const handleDeleteConversation = async () => {
     setButtonLoading(true);
-    const response = await deleteConversation(conversationId);
-    // console.log("delete response", response);
-    navigate("/chat");
-    if (socket && response.success) {
-      toast.success(response.message);
-      socket.emit("request-all-conversation", userData?._id);
+    try {
+      const response = await deleteConversation(conversationId);
+      navigate("/chat");
+      if (socket && response.success) {
+        toast.success(response.message);
+        socket.emit("request-all-conversation", userData?._id);
+      }
+    } catch (error) {
+      console.error("Error deleting conversation", error);
+      toast.error("Failed to delete conversation.");
+    } finally {
+      setButtonLoading(false);
     }
-    setButtonLoading(false);
   };
 
   return (

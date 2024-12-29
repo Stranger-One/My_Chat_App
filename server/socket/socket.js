@@ -747,7 +747,7 @@ io.on("connection", async (socket) => {
     // Save the user's peer ID
     socket.on('registerPeer', ({ userId, peerId }) => {
         users[userId] = { socketId: socket.id, peerId };
-        console.log('Users:', users);
+        // console.log('Users:', users);
     });
 
     // Handle video call request

@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { AiOutlineFullscreenExit } from "react-icons/ai";
-import { AiOutlineFullscreen } from "react-icons/ai";
+import { AiOutlineFullscreenExit, AiOutlineFullscreen } from "react-icons/ai";
 import {
   setCallAccepted,
   setCallActive,
@@ -13,7 +12,6 @@ import {
 import { CallPageFooter } from "../components";
 import { useMedia } from "../contexts/mediaProvider";
 import { useSocket } from "../contexts/SocketProvider";
-import Peer from "peerjs";
 import { addCall, getCallLog } from "../services/callServices";
 
 const CallPageLayout = () => {
@@ -25,49 +23,42 @@ const CallPageLayout = () => {
   const callAccepted = useSelector((state) => state.global.callAccepted);
   const [isMinimized, setIsMinimized] = useState(false);
   const dispatch = useDispatch();
- 
+
   const socket = useSocket();
   const {
     peer,
-    setPeer,
-    myPeerId,
-    setMyPeerId,
-    remotePeerId,
-    setRemotePeerId,
-    stream,
     setStream,
-    call,
-    setCall,
     myVideoRef,
     remoteVideoRef,
     duration,
     startTimer,
-    stopTimer
+    stopTimer,
   } = useMedia();
   const [incommingCall, setIncommingCall] = useState(null);
 
-
-  useEffect(() => {
-    console.log("duration :: ", duration);
-  }, [duration]);
-
-
+  // useEffect(() => {
+  //   console.log("duration :: ", duration);
+  // }, [duration]);
 
   const fetchCallLogs = async () => {
-    const callLogs = await getCallLog(userData._id);
-    console.log("call log response", callLogs);
-    dispatch(setCallLogs(callLogs.data));
+    try {
+      const callLogs = await getCallLog(userData._id);
+      // console.log("call log response", callLogs);
+      dispatch(setCallLogs(callLogs.data));
+    } catch (error) {
+      console.error("Error fetching call logs:", error);
+    }
   };
 
   const handleIncommingCall = useCallback((callDetails) => {
-    console.log("incomming call...", callDetails);
+    // console.log("incomming call...", callDetails);
     dispatch(setCallIncomming(true));
     dispatch(setCallDetails(callDetails));
-  }, []);
+  }, [dispatch]);
 
   const declineIncommingCall = () => {
     if (socket) {
-      console.log("call declined");
+      // console.log("call declined");
       socket.emit("decline_call", callDetails);
       dispatch(setCallDetails(null));
       dispatch(setCallIncomming(false));
@@ -76,7 +67,7 @@ const CallPageLayout = () => {
   };
 
   const handleDeclineCall = useCallback(async () => {
-    console.log("call declined");
+    // console.log("call declined");
     dispatch(setCallStatus("End call"));
     await new Promise((resolve) => setTimeout(resolve, 2000));
     dispatch(setCallActive(false));
@@ -84,75 +75,69 @@ const CallPageLayout = () => {
     setStream(null);
     myVideoRef.current.srcObject = null;
     remoteVideoRef.current.srcObject = null;
-  }, []);
+  }, [dispatch, setStream, myVideoRef, remoteVideoRef]);
 
-  const answerIncommingCall = () => {
+  const answerIncommingCall = async () => {
     if (socket) {
-      console.log("call answered :: userData.id :: ", userData);
+      // console.log("call answered :: userData.id :: ", userData);
       dispatch(setCallIncomming(false));
       dispatch(setCallAccepted(true));
       dispatch(setCallActive(true));
-      // socket.emit("answer_call", callDetails);
-      navigator.mediaDevices
-      .getUserMedia({ video: true, audio: false })
-      .then((stream) => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         setStream(stream);
         myVideoRef.current.srcObject = stream;
         incommingCall.answer(stream);
-
-
         incommingCall?.on("stream", (remoteStream) => {
           remoteVideoRef.current.srcObject = remoteStream;
         });
-      });
-      dispatch(setCallStatus("Answered"));
-      // start timer
-      startTimer();
+        dispatch(setCallStatus("Answered"));
+        startTimer();
+      } catch (error) {
+        console.error("Error answering call:", error);
+      }
     }
   };
 
   const handleAnswerCall = () => {
-    console.log("call answered :: userData.id :: ", userData);
+    // console.log("call answered :: userData.id :: ", userData);
     dispatch(setCallIncomming(false));
     dispatch(setCallActive(true));
     dispatch(setCallAccepted(true));
     dispatch(setCallStatus("Answered"));
-    // start timer
     startTimer();
   };
 
   const endCall = async () => {
     if (socket) {
       socket.emit("call_end", callDetails);
-
-      // add call log
       const callLog = {
         duration,
         callerId: callDetails.from.id,
         receiverId: callDetails.to.id,
         startTime: `${callDetails.callDate} ${callDetails.callTime}`,
       };
-      const response = await addCall(callLog);
+      try {
+        await addCall(callLog);
+      } catch (error) {
+        console.error("Error adding call log:", error);
+      }
     }
   };
 
   const handleEndCall = useCallback(async () => {
-    console.log("call end");
+    // console.log("call end");
     stopTimer();
     dispatch(setCallStatus("End call"));
     await new Promise((resolve) => setTimeout(resolve, 2000));
     dispatch(setCallActive(false));
     dispatch(setCallAccepted(false));
     dispatch(setCallDetails(null));
-
-    
     setStream(null);
     myVideoRef.current.srcObject = null;
     remoteVideoRef.current.srcObject = null;
-
     fetchCallLogs();
-
-  }, []);
+  }, [dispatch, stopTimer, setStream, myVideoRef, remoteVideoRef]);
 
   useEffect(() => {
     if (userData) {
@@ -160,19 +145,15 @@ const CallPageLayout = () => {
     }
   }, [userData]);
 
-
-  peer?.on("call", (incomingCall) => {
-    setIncommingCall(incomingCall);
-    const callDetails = incomingCall?.metadata?.callDetails;
-    handleIncommingCall(callDetails);
-    // console.log("incomingCall", callDetails);
-
-    // setIncommingCallDetails(callDetails);
-    // setIncomingCall(incomingCall);
-    // dispatch(setCallIncomming(true));
-  });
-
-
+  useEffect(() => {
+    if (peer) {
+      peer.on("call", (incomingCall) => {
+        setIncommingCall(incomingCall);
+        const callDetails = incomingCall?.metadata?.callDetails;
+        handleIncommingCall(callDetails);
+      });
+    }
+  }, [peer, handleIncommingCall]);
 
   useEffect(() => {
     if (socket) {
@@ -188,24 +169,20 @@ const CallPageLayout = () => {
         socket.off("call_end", handleEndCall);
       };
     }
-  }, [socket]);
+  }, [socket, handleIncommingCall, handleDeclineCall, handleAnswerCall, handleEndCall]);
 
   return callIncomming || callActive ? (
     <div className="w-full h-full absolute top-0 left-0 flex items-center justify-center pointer-events-none">
-      {/* Call popover */}
-      {callActive ? (
+      {callActive && (
         <div
           className={`${
-            isMinimized
-              ? " w-[300px] h-[200px] "
-              : "w-full h-full md:w-[600px] md:h-[500px]"
-          } bg-secondary  
-          rounded-lg boxShadow flex flex-col overflow-hidden pointer-events-auto z-50`}
+            isMinimized ? " w-[300px] h-[200px] " : "w-full h-full md:w-[600px] md:h-[500px]"
+          } bg-secondary rounded-lg boxShadow flex flex-col overflow-hidden pointer-events-auto z-50`}
         >
           <div className="w-full flex justify-between items-center p-2">
             <h2 className="text-text text-lg ">Let's Chat</h2>
             <div className="flex gap-2">
-              {/* {!isMinimized ? (
+              {!isMinimized ? (
                 <button
                   onClick={() => setIsMinimized(true)}
                   className="p-1 hover:bg-background rounded-full"
@@ -219,87 +196,57 @@ const CallPageLayout = () => {
                 >
                   <AiOutlineFullscreen size={20} />
                 </button>
-              )} */}
+              )}
             </div>
           </div>
 
           <div className="w-full h-full bg-text flex flex-col p-1">
             <div className="w-full h-full bg-background rounded-lg flex flex-col items-center justify-center p-4">
               {!isMinimized && (
-                // <div
-                //   className="w-28 h-28 bg-surface rounded-full bg-cover overflow-hidden"
-                //   style={{
-                //     backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
-                //   }}
-                // >
-                //   {callDetails && (
-                //     <img
-                //       src={callDetails?.to?.profilePic}
-                //       alt=""
-                //       className="object-cover h-full w-full object-center"
-                //     />
-                //   )}
-                // </div>
                 <div className="w-full h-full md:h-[300px] bg-zinc-400 relative overflow-hidden">
-                  {/* remote video */}
                   <div className="w-full h-full bg-white overflow-hidden">
-                    {remoteVideoRef ? (
+                    {remoteVideoRef && (
                       <video
                         ref={remoteVideoRef}
                         autoPlay
                         playsInline
                         className="w-full h-full object-cover"
                       ></video>
-                    ) : null}
+                    )}
                   </div>
-                  {/* my video */}
                   <div
                     className={`bg-white boxShadow z-10 absolute ${
-                      callAccepted
-                        ? "w-[150px] h-[100px] bottom-2 right-2"
-                        : "w-full h-full bottom-0 right-0"
-                    } `}
+                      callAccepted ? "w-[150px] h-[100px] bottom-2 right-2" : "w-full h-full bottom-0 right-0"
+                    }`}
                   >
-                    {myVideoRef ? (
+                    {myVideoRef && (
                       <video
                         ref={myVideoRef}
                         autoPlay
                         playsInline
                         className="w-full h-full object-cover"
                       ></video>
-                    ) : null}
+                    )}
                   </div>
                 </div>
               )}
               <h2 className="leading-5 capitalize line-clamp-1 font-semibold">
-                {/* Username */}
-                {callDetails?.from?.id === userData?._id
-                  ? callDetails.to.name
-                  : callDetails.from.name}
+                {callDetails?.from?.id === userData?._id ? callDetails.to.name : callDetails.from.name}
               </h2>
               <p className="leading-5">
                 {callStatus === "Answered"
-                  ? `${
-                      (duration / 60).toFixed(0) < 10
-                        ? `0${(duration / 60).toFixed(0)}`
-                        : (duration / 60).toFixed(0)
-                    } : ${
-                      duration % 60 < 10 ? `0${duration % 60}` : duration % 60
-                    }`
+                  ? `${(duration / 60).toFixed(0).padStart(2, '0')} : ${(duration % 60).toFixed(0).padStart(2, '0')}`
                   : callStatus}
               </p>
             </div>
             <CallPageFooter endCall={endCall} />
           </div>
         </div>
-      ) : null}
+      )}
 
-      {/* incomming call popover */}
       {callIncomming && (
         <div className="w-[300px] absolute right-6 bottom-6 bg-secondary/50 backdrop-blur-md rounded-lg px-2 py-4 flex flex-col items-center boxShadow pointer-events-auto">
-          <p className="capitalize font-semibold animate-bounce">
-            incomming call...
-          </p>
+          <p className="capitalize font-semibold animate-bounce">incomming call...</p>
           <div
             className="w-20 h-20 rounded-full bg-cover overflow-hidden"
             style={{
@@ -314,9 +261,7 @@ const CallPageLayout = () => {
               />
             )}
           </div>
-          <h2 className="font-semibold">
-            {callDetails?.from?.name || "Username"}
-          </h2>
+          <h2 className="font-semibold">{callDetails?.from?.name || "Username"}</h2>
           <div className="flex flex-col w-full gap-1 mt-5">
             <button
               onClick={declineIncommingCall}
@@ -326,7 +271,7 @@ const CallPageLayout = () => {
             </button>
             <button
               onClick={answerIncommingCall}
-              className="w-full py-2 text-text rounded-lg bg-[#82B2ED] hover:bg-[#82B2ED]/70  hover:font-semibold duration-100"
+              className="w-full py-2 text-text rounded-lg bg-[#82B2ED] hover:bg-[#82B2ED]/70 hover:font-semibold duration-100"
             >
               Answer
             </button>
