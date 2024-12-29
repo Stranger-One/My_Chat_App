@@ -11,7 +11,14 @@ import { FaArrowLeft } from "react-icons/fa";
 import toast from "react-hot-toast";
 import Loader from "./Loader";
 import moment from "moment";
-import { setCallActive, setCallDetails, setCallStatus } from "../store/globalSlice";
+import {
+  setCallAccepted,
+  setCallActive,
+  setCallDetails,
+  setCallIncomming,
+  setCallStatus,
+} from "../store/globalSlice";
+import { useMedia } from "../contexts/mediaProvider";
 
 const ChatHeader = ({ user, onlineUsers }) => {
   const userData = useSelector((state) => state.global.userData);
@@ -23,6 +30,23 @@ const ChatHeader = ({ user, onlineUsers }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const socket = useSocket();
+  const {
+    peer,
+    setPeer,
+    myPeerId,
+    setMyPeerId,
+    remotePeerId,
+    setRemotePeerId,
+    stream,
+    setStream,
+    call,
+    setCall,
+    myVideoRef,
+    remoteVideoRef,
+    duration,
+    startTimer,
+    stopTimer
+  } = useMedia();
   const conversationId = location?.state?.conversationId;
 
   // console.log("moment", moment().format("MM/DD/YYYY [at] hh:mm A"));
@@ -48,11 +72,49 @@ const ChatHeader = ({ user, onlineUsers }) => {
 
   const handleVideoCall = () => {
     console.log("start video call... ", callDetails);
-    socket.emit("initiate_call", callDetails);
+    // socket.emit("initiate_call", callDetails);
 
     dispatch(setCallDetails(callDetails));
-    dispatch(setCallActive(true))
-    dispatch(setCallStatus('Ringing...'))
+    dispatch(setCallActive(true));
+    dispatch(setCallStatus("Ringing..."));
+
+    socket.emit("requestPeerId", user._id, (response) => {
+      if (response.error) {
+        toast.error(response.error);
+        return;
+      }
+
+      const { peerId } = response;
+      setRemotePeerId(peerId);
+
+      navigator.mediaDevices
+        .getUserMedia({ video: true, audio: false })
+        .then(async (stream) => {
+          setStream(stream);
+          myVideoRef.current.srcObject = stream;
+          // console.log("local stream", stream);
+          const outgoingCall = await peer.call(peerId, stream, {
+            metadata: {
+              callDetails,
+            },
+          });
+          console.log("outgoingCall...", stream);
+
+          outgoingCall.on("stream", (remoteStream) => {
+            console.log("answered...", remoteStream);
+            remoteVideoRef.current.srcObject = remoteStream;
+
+            dispatch(setCallIncomming(false));
+            dispatch(setCallActive(true));
+            dispatch(setCallAccepted(true));
+            dispatch(setCallStatus("Answered"));
+            startTimer()
+          });
+
+          // setCall(outgoingCall);
+          // console.log("call outgoing...");
+        });
+    });
   };
 
   const handleThreeDot = () => {

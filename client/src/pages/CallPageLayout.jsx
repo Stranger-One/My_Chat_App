@@ -25,9 +25,8 @@ const CallPageLayout = () => {
   const callAccepted = useSelector((state) => state.global.callAccepted);
   const [isMinimized, setIsMinimized] = useState(false);
   const dispatch = useDispatch();
-  const [duration, setDuration] = useState(0);
+ 
   const socket = useSocket();
-  const intervalRef = useRef(null);
   const {
     peer,
     setPeer,
@@ -41,27 +40,22 @@ const CallPageLayout = () => {
     setCall,
     myVideoRef,
     remoteVideoRef,
+    duration,
+    startTimer,
+    stopTimer
   } = useMedia();
+  const [incommingCall, setIncommingCall] = useState(null);
+
 
   useEffect(() => {
     console.log("duration :: ", duration);
   }, [duration]);
 
-  const startTimer = () => {
-    setDuration(0);
-    intervalRef.current = setInterval(() => {
-      setDuration((prev) => prev + 1);
-    }, 1000);
-  };
 
-  const stopTimer = () => {
-    clearInterval(intervalRef.current);
-    // setDuration(0);
-  };
 
   const fetchCallLogs = async () => {
     const callLogs = await getCallLog(userData._id);
-    // console.log("call log response", callLogs);
+    console.log("call log response", callLogs);
     dispatch(setCallLogs(callLogs.data));
   };
 
@@ -87,6 +81,9 @@ const CallPageLayout = () => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
     dispatch(setCallActive(false));
     dispatch(setCallDetails(null));
+    setStream(null);
+    myVideoRef.current.srcObject = null;
+    remoteVideoRef.current.srcObject = null;
   }, []);
 
   const answerIncommingCall = () => {
@@ -95,7 +92,19 @@ const CallPageLayout = () => {
       dispatch(setCallIncomming(false));
       dispatch(setCallAccepted(true));
       dispatch(setCallActive(true));
-      socket.emit("answer_call", callDetails);
+      // socket.emit("answer_call", callDetails);
+      navigator.mediaDevices
+      .getUserMedia({ video: true, audio: false })
+      .then((stream) => {
+        setStream(stream);
+        myVideoRef.current.srcObject = stream;
+        incommingCall.answer(stream);
+
+
+        incommingCall?.on("stream", (remoteStream) => {
+          remoteVideoRef.current.srcObject = remoteStream;
+        });
+      });
       dispatch(setCallStatus("Answered"));
       // start timer
       startTimer();
@@ -136,12 +145,32 @@ const CallPageLayout = () => {
     dispatch(setCallAccepted(false));
     dispatch(setCallDetails(null));
 
+    
+    setStream(null);
+    myVideoRef.current.srcObject = null;
+    remoteVideoRef.current.srcObject = null;
+
     fetchCallLogs();
+
   }, []);
 
-  useEffect(()=>{
-    fetchCallLogs();
-  }, [userData])
+  useEffect(() => {
+    if (userData) {
+      fetchCallLogs();
+    }
+  }, [userData]);
+
+
+  peer?.on("call", (incomingCall) => {
+    setIncommingCall(incomingCall);
+    const callDetails = incomingCall?.metadata?.callDetails;
+    handleIncommingCall(callDetails);
+    // console.log("incomingCall", callDetails);
+
+    // setIncommingCallDetails(callDetails);
+    // setIncomingCall(incomingCall);
+    // dispatch(setCallIncomming(true));
+  });
 
 
 
@@ -214,14 +243,14 @@ const CallPageLayout = () => {
                 <div className="w-full h-full md:h-[300px] bg-zinc-400 relative overflow-hidden">
                   {/* remote video */}
                   <div className="w-full h-full bg-white overflow-hidden">
-                    {/* {remoteVideoRef ? (
+                    {remoteVideoRef ? (
                       <video
                         ref={remoteVideoRef}
                         autoPlay
                         playsInline
                         className="w-full h-full object-cover"
                       ></video>
-                    ) : null} */}
+                    ) : null}
                   </div>
                   {/* my video */}
                   <div
@@ -231,14 +260,14 @@ const CallPageLayout = () => {
                         : "w-full h-full bottom-0 right-0"
                     } `}
                   >
-                    {/* {myVideoRef ? (
+                    {myVideoRef ? (
                       <video
                         ref={myVideoRef}
                         autoPlay
                         playsInline
                         className="w-full h-full object-cover"
                       ></video>
-                    ) : null} */}
+                    ) : null}
                   </div>
                 </div>
               )}
