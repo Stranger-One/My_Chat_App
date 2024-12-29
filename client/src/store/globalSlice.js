@@ -10,10 +10,13 @@ const globalSlice = createSlice({
         allConversation: [],
         allUserStatus: [],
         
+        callStatus: "outgoing",
         callDetails: null,
         callIncomming: false,
         callAccepted: false,
         callActive: false,
+
+        callLogs: []
     },
     reducers: {
         setUserData: (state, action) => {
@@ -54,10 +57,15 @@ const globalSlice = createSlice({
         setCallActive: (state, action)=>{
             state.callActive = action.payload
         },
-       
+        setCallStatus: (state, action)=>{
+            state.callStatus = action.payload
+        },
+        setCallLogs: (state, action)=>{
+            state.callLogs = action.payload
+        }
     }
 })
 
-export const { setUserData, setIsAuthenticated, setLoading, setOnlineUsers, setAllConversation, setAllUserStatus, setCallIncomming, setCallDetails, logout, setCallAccepted, setCallActive  } = globalSlice.actions;
+export const { setUserData, setIsAuthenticated, setLoading, setOnlineUsers, setAllConversation, setAllUserStatus, setCallIncomming, setCallDetails, logout, setCallAccepted, setCallActive, setCallStatus, setCallLogs  } = globalSlice.actions;
 
 export default globalSlice.reducer;

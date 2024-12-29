@@ -724,23 +724,23 @@ io.on("connection", async (socket) => {
     })
 
 
-    socket.on("initiate_call", (details) => {
-        // console.log("initiate_call", details);
-        io.to(details.to.id).emit("incomming_call", details)
+    // call section
+    socket.on("initiate_call", (callDetails) => {
+        // console.log("initiate_call", callDetails);
+        io.to(callDetails.to.id).emit("incomming_call", callDetails)
+    })
+    socket.on("answer_call", (callDetails) => {
+        // console.log("answer_call", callDetails);
+        io.to(callDetails.from.id).emit("answer_call")
+    })
+    socket.on("decline_call", (callDetails) => {
+        // console.log("decline_call", callDetails);
+        io.to(callDetails.from.id).emit("decline_call")
     })
 
-    socket.on("answer_call", (details) => {
-        console.log("answer_call", details);
-        io.to(details.from.id).emit("answer_call")
-    })
-    socket.on("decline_call", (details) => {
-        // console.log("decline_call", details);
-        io.to(details.from.id).emit("decline_call")
-    })
-
-    socket.on("call_end", (details) => {
-        // console.log("call_end", details);
-        io.to(details.from.id).to(details.to.id).emit("call_end")
+    socket.on("call_end", (callDetails) => {
+        // console.log("call_end", callDetails);
+        io.to(callDetails.from.id).to(callDetails.to.id).emit("call_end")
     })
 
 

@@ -1,29 +1,17 @@
 import React, { useState } from "react";
 import { IoIosArrowDown, IoIosArrowUp, IoIosSearch } from "react-icons/io";
-import {
-  IoCallOutline,
-  IoClose,
-  IoStarOutline,
-  IoVideocamOutline,
-} from "react-icons/io5";
+import { IoClose, IoVideocamOutline } from "react-icons/io5";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { deleteConversation } from "../services/messageServices";
 import { useSocket } from "../contexts/SocketProvider";
+import { useDispatch, useSelector } from "react-redux";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { AiOutlineDelete } from "react-icons/ai";
 import { FaArrowLeft } from "react-icons/fa";
-import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Loader from "./Loader";
-import {
-  setCallAccepted,
-  setCallActive,
-  setCallDetails,
-  setCallIncomming,
-} from "../store/globalSlice";
 import moment from "moment";
-import { useMedia } from "../contexts/mediaProvider";
-import Peer from "peerjs";
+import { setCallActive, setCallDetails, setCallStatus } from "../store/globalSlice";
 
 const ChatHeader = ({ user, onlineUsers }) => {
   const userData = useSelector((state) => state.global.userData);
@@ -36,98 +24,35 @@ const ChatHeader = ({ user, onlineUsers }) => {
   const dispatch = useDispatch();
   const socket = useSocket();
   const conversationId = location?.state?.conversationId;
-  const {peer, setPeer, myPeerId, setMyPeerId, remotePeerId, setRemotePeerId, stream, setStream, call, setCall, myVideoRef, remoteVideoRef } = useMedia()
-  // console.log("user", user);
 
   // console.log("moment", moment().format("MM/DD/YYYY [at] hh:mm A"));
-  const date = moment().format("DD/MM/YYYY");
+  const date = moment().format("YYYY-MM-DD");
   const time = moment().format("hh:mm A");
 
-  const outgoingCallDetails = {
-    call: "outgoing",
-    callType: "", // voice / video
+  const callDetails = {
     callDate: date,
     callTime: time,
-    to: {
-      name: user.name,
-      email: user.email,
-      profilePic: user.profilePic,
-      id: user._id,
-    },
     from: {
       name: userData.name,
       email: userData.email,
       profilePic: userData.profilePic,
       id: userData._id,
     },
+    to: {
+      name: user.name,
+      email: user.email,
+      profilePic: user.profilePic,
+      id: user._id,
+    },
   };
 
-  // const handleVoiceCall = () => {
-  //   // console.log("voice call initiating...");
-  //   dispatch(setCallActive(true));
-
-  //   const details = {
-  //     ...outgoingCallDetails,
-  //     callType: "voice",
-  //   };
-  //   dispatch(setCallDetails(details));
-
-  //   socket.emit("initiate_call", details);
-  // };
-
-  // const handleVideoCall = () => {
-  //   console.log("Video Call initiating...");
-  //   dispatch(setCallActive(true));
-
-  //   const details = {
-  //     ...outgoingCallDetails,
-  //     callType: "video",
-  //   };
-  //   dispatch(setCallDetails(details));
-
-  //   socket.emit("initiate_call", details);
-  // };
-
   const handleVideoCall = () => {
-    socket.emit("requestPeerId", user._id, (response) => { 
-      if (response.error) {
-        toast.error(response.error)
-        return;
-      }
-      // console.log("Call initiating...", response);
+    console.log("start video call... ", callDetails);
+    socket.emit("initiate_call", callDetails);
 
-      dispatch(setCallActive(true));
-      const details = {
-        ...outgoingCallDetails,
-        callType: "video",
-      };
-
-      dispatch(setCallDetails(details));
-      // console.log("details", details);
-      // socket.emit("initiate_call", details);
-      const { peerId } = response;
-      setRemotePeerId(peerId);
-
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then( async(stream) => {
-        setStream(stream);
-        myVideoRef.current.srcObject = stream;
-        // console.log("local stream", stream);
-        const outgoingCall = await peer.call(peerId, stream, {
-          metadata: {
-            callerDetails: details
-          },
-        });
-        // console.log("outgoingCall", outgoingCall);
-
-        outgoingCall.on("stream", (remoteStream) => {
-          remoteVideoRef.current.srcObject = remoteStream;
-          // console.log("remoteStream", remoteStream);
-        });
-
-        setCall(outgoingCall);
-        // console.log("call outgoing...");
-      });
-    });
+    dispatch(setCallDetails(callDetails));
+    dispatch(setCallActive(true))
+    dispatch(setCallStatus('Ringing...'))
   };
 
   const handleThreeDot = () => {
@@ -135,19 +60,7 @@ const ChatHeader = ({ user, onlineUsers }) => {
     setIsSearchOpen(false);
   };
 
-
   const linkList = [
-    // {
-    //   path: "",
-    //   icon: IoStarOutline,
-    //   onclick: startCall,
-    // },
-    // {
-    //   path: "",
-    //   icon: IoCallOutline,
-    //   onclick: handleVoiceCall,
-    //   disabled: callActive ? true : false,
-    // },
     {
       path: "",
       icon: IoVideocamOutline,

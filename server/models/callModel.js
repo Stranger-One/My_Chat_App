@@ -12,23 +12,22 @@ const callSchema = new mongoose.Schema({
         required: true
     },
     startTime: {
-        type: Date
-    },
-    endTime: {
-        type: Date
+        type: String,
     },
     duration: {
         type: Number,
         default: 0
     },
-    status: {
-        type: String,
-        enum: {
-            values: ['missedCall', 'incommingCall', 'outgoingCall'],
-            message: '{VALUE} is not supported'
-        },
-        required: true
-    }
+    // status: {
+    //     type: String,
+    //     enum: {
+    //         values: ['missedCall', 'incommingCall', 'outgoingCall'],
+    //         message: '{VALUE} is not supported'
+    //     },
+    //     required: true
+    // }
+},{
+    timestamps: true
 });
 
 const Call = mongoose.model('Call', callSchema);

@@ -66,6 +66,7 @@ const HomeLayout = () => {
   }, [peer])
 
   useEffect(() => {
+    
     if (socket) {
       socket.on("onlineUsers", handleOnlineUsers);
 
@@ -81,6 +82,8 @@ const HomeLayout = () => {
       };
     }
   }, [userData, socket]);
+
+  
 
   return (
     <div className="w-full h-screen grid grid-rows-[auto_50px] md:grid-cols-[50px_auto]">
