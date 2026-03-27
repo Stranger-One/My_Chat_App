@@ -49,7 +49,7 @@ const Profile = () => {
       } else {
         console.error(
           "Upload failed:",
-          response?.data?.message || "Unknown error"
+          response?.data?.message || "Unknown error",
         );
       }
     } catch (error) {
@@ -115,7 +115,7 @@ const Profile = () => {
 
         const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/upload/upload-media`,
-          data
+          data,
         );
 
         // console.log("upload response", response.data.file.path);
@@ -170,22 +170,17 @@ const Profile = () => {
       <div className="w-full h-full flex flex-col items-center justify-center  relative px-5 ">
         {/* Profile: */}
         <div className=" flex flex-col item-center justify-center">
-          <label htmlFor="file" className="cursor-pointer p-1 mx-auto">
+          <label htmlFor="file" className="cursor-pointer p-1 mx-auto relative">
             <div
-              className="w-32 h-32 bg-surface rounded-full relative bg-cover"
+              className="w-32 h-32 bg-surface rounded-full relative bg-cover overflow-hidden"
               style={{
                 backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
               }}
             >
-              <img
-                src={profile}
-                alt=""
-                className="object-cover rounded-full h-full"
-              />
-
-              <div className="w-10 h-10 absolute bg-primary bottom-0 right-0 rounded-full flex items-center justify-center z-10">
-                <FiCamera size={20} className="text-background" />
-              </div>
+              <img src={profile} alt="" className="object-cover " />
+            </div>
+            <div className="w-10 h-10 absolute bg-primary bottom-0 right-0 rounded-full flex items-center justify-center z-10">
+              <FiCamera size={20} className="text-background" />
             </div>
           </label>
           <input
