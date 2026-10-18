@@ -2,78 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Target the scrollbar */
+:root {
+  --wa-bg: #f0f2f5;
+  --wa-panel: #ffffff;
+  --wa-surface: #f5f6f6;
+  --wa-header: #f0f2f5;
+  --wa-chat: #efeae2;
+  --wa-text-primary: #111b21;
+  --wa-text-secondary: #54656f;
+  --wa-border: #e9edef;
+  --wa-bubble-sent: #d9fdd3;
+  --wa-bubble-recv: #ffffff;
+  --animationDuration: 5000ms;
+}
+
+.dark {
+  --wa-bg: #111b21;
+  --wa-panel: #202c33;
+  --wa-surface: #182229;
+  --wa-header: #202c33;
+  --wa-chat: #0b141a;
+  --wa-text-primary: #e9edef;
+  --wa-text-secondary: #8696a0;
+  --wa-border: #222d34;
+  --wa-bubble-sent: #005c4b;
+  --wa-bubble-recv: #202c33;
+}
+
+/* WhatsApp custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px; /* Width of the scrollbar */
+  width: 6px;
+  height: 6px;
 }
 
-/* Track (background) */
 ::-webkit-scrollbar-track {
-  background: #f0f0f0; /* Light gray background */
-  border-radius: 10px; /* Rounded corners */
+  background: transparent;
 }
 
-/* Thumb (scroll indicator) */
 ::-webkit-scrollbar-thumb {
-  background: #888; /* Darker gray for the scroll indicator */
-  border-radius: 10px; /* Rounded corners */
+  background: rgba(134, 150, 160, 0.4);
+  border-radius: 4px;
 }
 
-/* Hover effect for thumb */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555; /* Darker shade on hover */
+  background: rgba(134, 150, 160, 0.7);
 }
 
-.boxShadow{
-  box-shadow: 0 0 5px rgba(46, 45, 45, 0.849)
+/* WhatsApp Doodle Wallpaper */
+.whatsapp-chat-bg {
+  background-color: var(--wa-chat);
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.02) 0%, transparent 100%),
+    url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.06' fill-rule='evenodd'%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath d='M40 20a4 4 0 0 1 4 4v2a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2a4 4 0 0 1 4-4zm40 10a5 5 0 1 1-10 0 5 5 0 0 1 10 0zm20 40a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-70 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm50 20a6 6 0 1 1-12 0 6 6 0 0 1 12 0zm-80 0a5 5 0 1 0 0-10 5 5 0 0 0 0 10z'/%3E%3Cpath d='M65 70l6 10H59z'/%3E%3Cpath d='M15 75l-4 6h8z'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
 }
 
-input:-webkit-autofill {
-  background-color: secondary !important;
-  -webkit-text-fill-color: #000 !important;
-  box-shadow: 0 0 0px 1000px white inset !important;
-  transition: background-color 5000s ease-in-out 0s;
+.dark .whatsapp-chat-bg {
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.01) 0%, transparent 100%),
+    url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23FFFFFF' fill-opacity='0.035' fill-rule='evenodd'%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath d='M40 20a4 4 0 0 1 4 4v2a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2a4 4 0 0 1 4-4zm40 10a5 5 0 1 1-10 0 5 5 0 0 1 10 0zm20 40a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-70 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm50 20a6 6 0 1 1-12 0 6 6 0 0 1 12 0zm-80 0a5 5 0 1 0 0-10 5 5 0 0 0 0 10z'/%3E%3Cpath d='M65 70l6 10H59z'/%3E%3Cpath d='M15 75l-4 6h8z'/%3E%3C/g%3E%3C/svg%3E");
 }
 
-.status-viewer {
+/* WhatsApp Message Bubble Tails */
+.bubble-sent {
+  background-color: var(--wa-bubble-sent);
+  border-radius: 8px 0px 8px 8px;
   position: relative;
-  height: 100%;
-  /* background: #000; */
-  color: #fff;
 }
 
-.status-image {
-  width: 100%;
-  height: 70vh;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-.status-user-info {
+.bubble-sent::after {
+  content: "";
   position: absolute;
-  top: 20px;
-  left: 20px;
-  color: white;
+  top: 0;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border: 4px solid transparent;
+  border-top-color: var(--wa-bubble-sent);
+  border-left-color: var(--wa-bubble-sent);
 }
 
-.progress-container {
-  display: flex;
-  gap: 5px;
-  /* position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px; */
-}
-
-/* .progress-bar {
-  flex: 1;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 2px;
-  overflow: hidden;
+.bubble-recv {
+  background-color: var(--wa-bubble-recv);
+  border-radius: 0px 8px 8px 8px;
   position: relative;
-} */
+}
 
+.bubble-recv::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border: 4px solid transparent;
+  border-top-color: var(--wa-bubble-recv);
+  border-right-color: var(--wa-bubble-recv);
+}
+
+/* Progress bar animation for status */
 .progress-bar.completed::after {
   content: "";
   position: absolute;
@@ -82,11 +109,6 @@ input:-webkit-autofill {
   width: 100%;
   height: 100%;
   background: white;
-  /* animation: progress-animation 5s linear; */
-}
-
-:root {
-  --animationDuration: 5000ms;
 }
 
 .progress-bar.current::after {
@@ -97,16 +119,11 @@ input:-webkit-autofill {
   width: 100%;
   height: 100%;
   background: white;
-  animation: progress-animation linear;
+  animation: progress-animation linear forwards;
   animation-duration: var(--animationDuration);
 }
 
 @keyframes progress-animation {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
-  }
+  from { width: 0; }
+  to { width: 100%; }
 }
-

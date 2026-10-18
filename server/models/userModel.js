@@ -26,6 +26,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png"
     },
+    about: {
+        type: String,
+        default: "Hey there! I am using WhatsApp."
+    },
+    lastSeen: {
+        type: Date,
+        default: Date.now
+    },
     varificationOtp: {
         type: String,
         default: null
@@ -36,7 +44,7 @@ const userSchema = new mongoose.Schema({
     },
     verified: {
         type: Boolean,
-        default: false
+        default: true
     }
 }, {
     timestamps: true

@@ -1,16 +1,18 @@
-import React from 'react'
-import { Outlet } from 'react-router-dom'
-import { ChatSection } from '../components'
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import { ChatSection } from '../components';
 
 const ChatPageLayout = () => {
   return (
-    <div className='bg-gray-200 h-[calc(100vh-50px)] md:h-screen md:grid md:grid-cols-[250px_auto] '>
-      <div className="hidden md:inline-block">
-      <ChatSection/>
+    <div className="w-full h-full flex overflow-hidden bg-wa-bg-light dark:bg-wa-bg-dark">
+      <div className="hidden md:flex h-full">
+        <ChatSection />
       </div>
-      <Outlet />
+      <div className="flex-1 h-full overflow-hidden">
+        <Outlet />
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default ChatPageLayout
+export default ChatPageLayout;

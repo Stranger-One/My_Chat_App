@@ -1,72 +1,84 @@
-import React, { useState } from "react";
-import { IoVideocamOutline } from "react-icons/io5";
-import { MdOutlineCallEnd } from "react-icons/md";
-import { IoMicOutline } from "react-icons/io5";
-import { useDispatch } from "react-redux";
-import { IoMicOffOutline } from "react-icons/io5";
-import { IoVideocamOffOutline } from "react-icons/io5";
-
-import { setCallActive, setCallDetails } from "../store/globalSlice";
+import React from "react";
+import { 
+  IoMicOutline, 
+  IoMicOffOutline, 
+  IoVideocamOutline, 
+  IoVideocamOffOutline,
+  IoCall 
+} from "react-icons/io5";
+import { MdOutlineScreenShare, MdOutlineStopScreenShare } from "react-icons/md";
 import { useMedia } from "../contexts/mediaProvider";
 
-const CallPageFooter = ({endCall}) => {
-  const {peer, setPeer, myPeerId, setMyPeerId, remotePeerId, setRemotePeerId, stream, setStream, call, setCall, myVideoRef, remoteVideoRef } = useMedia()
-  const dispatch = useDispatch();
-
-  const [isVideoMuted, setIsVideoMuted] = useState(false);
-  const [isAudioMuted, setIsAudioMuted] = useState(false);
-
-
-  const toggleVideo = () => {
-    if (stream) {
-      const videoTrack = stream.getVideoTracks()[0];
-      videoTrack.enabled = !videoTrack.enabled;
-      // console.log(videoTrack.enabled);
-      setIsVideoMuted(!videoTrack.enabled);
-    }
-  };
-  
-  const toggleAudio = () => {
-    if (stream) {
-      const audioTrack = stream.getAudioTracks()[0];
-      audioTrack.enabled = !audioTrack.enabled;
-      // console.log(audioTrack.enabled);
-      setIsAudioMuted(!audioTrack.enabled);
-    }
-  };
-
-
-
-  const actions = [
-    {
-      icon: IoMicOffOutline,
-      onclick: toggleAudio,
-    },
-    {
-      icon: IoVideocamOffOutline,
-      onclick: toggleVideo,
-    },
-  ];
+const CallPageFooter = ({ endCall, isVoiceOnly = false }) => {
+  const {
+    isAudioMuted,
+    isVideoMuted,
+    toggleAudio,
+    toggleVideo,
+    isScreenSharing,
+    toggleScreenShare,
+  } = useMedia();
 
   return (
-    <div className="w-full h-20 flex gap-2 items-center justify-center">
-        <button
-          onClick={toggleAudio}
-          className={`p-[6px] ${isAudioMuted ? "bg-background" : "bg-background/70"} hover:bg-background duration-150 flex items-center justify-center w-fit rounded-full cursor-pointer`}
-        >
-          <IoMicOffOutline size={24} className="" />
-        </button>
-        <button
-          onClick={toggleVideo}
-          className={`p-[6px] ${isVideoMuted ? "bg-background" : "bg-background/70"} hover:bg-background duration-150 flex items-center justify-center w-fit rounded-full cursor-pointer`}
-        >
-          <IoVideocamOffOutline size={24} className="" />
-        </button>
+    <div className="w-full h-20 flex gap-4 items-center justify-center bg-black/40 backdrop-blur-md px-4 select-none">
+      {/* Microphone Toggle */}
       <button
-        onClick={endCall}
-        className="py-[6px] px-4 bg-red-500/70 hover:bg-red-500 duration-150 flex items-center justify-center w-fit rounded-full cursor-pointer"
+        type="button"
+        onClick={toggleAudio}
+        title={isAudioMuted ? "Unmute microphone" : "Mute microphone"}
+        className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+          isAudioMuted
+            ? "bg-rose-500 text-white shadow-lg"
+            : "bg-white/15 hover:bg-white/25 text-white"
+        }`}
       >
-        <MdOutlineCallEnd size={24} className="" />
+        {isAudioMuted ? <IoMicOffOutline size={22} /> : <IoMicOutline size={22} />}
+      </button>
+
+      {/* Video Toggle (Hidden if voice-only call) */}
+      {!isVoiceOnly && (
+        <button
+          type="button"
+          onClick={toggleVideo}
+          title={isVideoMuted ? "Turn camera on" : "Turn camera off"}
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+            isVideoMuted
+              ? "bg-rose-500 text-white shadow-lg"
+              : "bg-white/15 hover:bg-white/25 text-white"
+          }`}
+        >
+          {isVideoMuted ? <IoVideocamOffOutline size={22} /> : <IoVideocamOutline size={22} />}
+        </button>
+      )}
+
+      {/* Screen Share Toggle */}
+      {!isVoiceOnly && (
+        <button
+          type="button"
+          onClick={toggleScreenShare}
+          title={isScreenSharing ? "Stop screen sharing" : "Share screen"}
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+            isScreenSharing
+              ? "bg-wa-teal text-white shadow-lg"
+              : "bg-white/15 hover:bg-white/25 text-white"
+          }`}
+        >
+          {isScreenSharing ? (
+            <MdOutlineStopScreenShare size={22} />
+          ) : (
+            <MdOutlineScreenShare size={22} />
+          )}
+        </button>
+      )}
+
+      {/* End Call Button */}
+      <button
+        type="button"
+        onClick={endCall}
+        title="End call"
+        className="w-13 h-12 px-6 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95"
+      >
+        <IoCall size={24} className="rotate-[135deg]" />
       </button>
     </div>
   );

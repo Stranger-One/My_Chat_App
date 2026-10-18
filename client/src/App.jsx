@@ -1,58 +1,39 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { checkAuthentication } from "./services/authService";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  setIsAuthenticated,
-  setUserData,
-} from "./store/globalSlice";
+import { setIsAuthenticated, setUserData, setTheme } from "./store/globalSlice";
 import { CallPageLayout } from "./pages";
-
 
 const App = () => {
   const token = JSON.parse(sessionStorage.getItem("token"));
+  const theme = useSelector((state) => state.global.theme);
   const dispatch = useDispatch();
 
   const authenticate = async () => {
-    const response = await checkAuthentication(token);
-    // console.log(response);
-
-    if (response?.success) {
-      dispatch(setIsAuthenticated(true));
-      dispatch(setUserData(response.user));
+    if (!token) return;
+    try {
+      const response = await checkAuthentication(token);
+      if (response?.success) {
+        dispatch(setIsAuthenticated(true));
+        dispatch(setUserData(response.user));
+      }
+    } catch (err) {
+      console.warn("Auth check failed:", err);
     }
   };
 
-  const callInformation = {
-    title: "Call Information",
-    call: "incomming", // incomming / outgoing
-    callType: "voice", // voice / video
-    callDuration: "00:00:00",
-    callDate: "2022-01-01",
-    callTime: "00:00:00",
-    to:{
-      name: "John Doe",
-      email: "",
-      prifilePic: '',
-      id: ''
-    },
-    from:{
-      name: "John Doe",
-      email: "",
-      prifilePic: '',
-      id: ''
-    },
-  }
-
   useEffect(() => {
     authenticate();
+    const savedTheme = localStorage.getItem("wa_theme") || "dark";
+    dispatch(setTheme(savedTheme));
   }, []);
 
   return (
-    <main className="w-full h-screen bg-background relative overflow-hidden">
+    <main className="w-full h-screen bg-wa-bg-light dark:bg-wa-bg-dark text-wa-text-primary-light dark:text-wa-text-primary-dark relative overflow-hidden font-sans">
       <Outlet />
-      <Toaster />
+      <Toaster position="top-center" reverseOrder={false} />
       <CallPageLayout />
     </main>
   );

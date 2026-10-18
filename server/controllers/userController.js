@@ -332,7 +332,7 @@ export const searchUsers = async (req, res) => {
                 { name: { $regex: query, $options: 'i' } }, // Case-insensitive search
                 { email: { $regex: query, $options: 'i' } }, // Case-insensitive search
             ]
-        }, { name: 1, email: 1, profilePic: 1 }).limit(10)
+        }, { name: 1, email: 1, profilePic: 1, about: 1, lastSeen: 1 }).limit(10)
 
         res.status(200).json({
             success: true,
@@ -362,6 +362,8 @@ export const getUser = async (req, res) => {
             name: 1,
             email: 1,
             profilePic: 1,
+            about: 1,
+            lastSeen: 1,
             verified: 1,
         })
         if (!user) {
@@ -396,7 +398,7 @@ export const updateUser = async (req, res) => {
         }
         // console.log(data);
 
-        const updatedUser = await User.findOneAndUpdate({ email }, data, {new: true}).select("email name verified profilePic _id")
+        const updatedUser = await User.findOneAndUpdate({ email }, data, {new: true}).select("email name verified profilePic about lastSeen _id")
         if (!updatedUser) {
             return res.status(404).json({
                 success: false,

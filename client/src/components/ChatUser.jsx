@@ -1,83 +1,149 @@
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import React from "react";
+import { useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSocket } from "../contexts/SocketProvider";
+import { IoCheckmarkDone, IoCheckmark } from "react-icons/io5";
+import { BsCameraFill, BsMicFill, BsFileEarmarkFill } from "react-icons/bs";
+import moment from "moment";
 
 const ChatUser = ({ conversation, setSearchQuery }) => {
   const userData = useSelector((state) => state.global.userData);
   const onlineUsers = useSelector((state) => state.global.onlineUsers);
+  const typingUsers = useSelector((state) => state.global.typingUsers);
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const socket = useSocket();
+  const { userId } = useParams();
+
+  const otherUser = conversation?.userDetails;
+  const isOnline = onlineUsers?.includes(otherUser?._id);
+  const isTyping = typingUsers?.[otherUser?._id];
+  const isSelected = userId === otherUser?._id;
 
   const openChat = () => {
-    navigate(`/chat/${conversation?.userDetails?._id}`, {
+    navigate(`/chat/${otherUser?._id}`, {
       state: { conversationId: conversation?._id },
     });
-    if (socket) {
+    if (socket && otherUser?._id && userData?._id) {
       socket.emit("seen", {
         seenUserId: userData._id,
-        chatUserId: conversation?.userDetails?._id,
+        chatUserId: otherUser._id,
         conversationId: conversation._id,
       });
     }
-    setSearchQuery("");
+    if (setSearchQuery) {
+      setSearchQuery("");
+    }
   };
 
-  const messageTime = new Date(
-    conversation?.lastMessage?.createdAt
-  ).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
+  // Format timestamp like WhatsApp
+  const formatTime = (time) => {
+    if (!time) return "";
+    const msgDate = moment(time);
+    const now = moment();
+    if (now.isSame(msgDate, "day")) {
+      return msgDate.format("hh:mm A");
+    } else if (now.subtract(1, "day").isSame(msgDate, "day")) {
+      return "Yesterday";
+    } else {
+      return msgDate.format("DD/MM/YYYY");
+    }
+  };
+
+  const lastMsg = conversation?.lastMessage;
+  const isSentByMe = lastMsg?.sender === userData?._id;
+
+  const renderSnippet = () => {
+    if (isTyping) {
+      return <span className="text-wa-teal dark:text-wa-green font-medium animate-pulse">typing...</span>;
+    }
+    if (!lastMsg) return "Tap to chat";
+
+    if (lastMsg.isDeleted) {
+      return <span className="italic text-xs opacity-75">🚫 This message was deleted</span>;
+    }
+
+    if (lastMsg.file?.fileUrl) {
+      const type = lastMsg.file.fileType || "";
+      if (type.includes("image")) {
+        return (
+          <span className="flex items-center gap-1">
+            <BsCameraFill size={13} /> Photo
+          </span>
+        );
+      }
+      if (type.includes("audio")) {
+        return (
+          <span className="flex items-center gap-1">
+            <BsMicFill size={13} className="text-wa-teal" /> Voice message
+          </span>
+        );
+      }
+      return (
+        <span className="flex items-center gap-1">
+          <BsFileEarmarkFill size={13} /> Document
+        </span>
+      );
+    }
+
+    return lastMsg.text || "Media";
+  };
 
   return (
     <div
       onClick={openChat}
-      className="w-full grid grid-cols-[40px_auto_50px] p-1 gap-1 hover:bg-background duration-150 rounded-md cursor-pointer text-text"
+      className={`w-full flex items-center gap-3 px-3 py-3 cursor-pointer transition-colors border-b border-wa-border-light dark:border-wa-border-dark select-none ${
+        isSelected
+          ? "bg-wa-hover-light dark:bg-wa-surface"
+          : "hover:bg-wa-hover-light dark:hover:bg-wa-hover-dark"
+      }`}
     >
-      <div
-        className="w-10 h-10 bg-surface rounded-full bg-cover relative"
-        style={{
-          backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
-        }}
-      >
-        {conversation?.userDetails?.profilePic && (
-          <img
-            src={conversation?.userDetails?.profilePic}
-            alt=""
-            className="object-cover h-full w-full rounded-full"
-          />
-        )}
-        {onlineUsers?.includes(conversation?.userDetails?._id) && (
-          <div className="absolute w-2 h-2 rounded-full bg-primary bottom-1 right-1"></div>
+      {/* Contact Avatar */}
+      <div className="relative w-12 h-12 flex-shrink-0">
+        <img
+          src={otherUser?.profilePic || "https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png"}
+          alt={otherUser?.name}
+          className="w-full h-full object-cover rounded-full"
+        />
+        {isOnline && (
+          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-wa-badge border-2 border-white dark:border-wa-panel-dark rounded-full"></span>
         )}
       </div>
-      <div className="">
-        <h2 className="user-name line-clamp-1 font-semibold capitalize leading-5 ">
-          {conversation?.userDetails?.name}
-        </h2>
-        <p className="last-chat line-clamp-1 leading-5 text-text/70">
-          {conversation?.lastMessage?.sender == userData?._id ? "You:" : ""}{" "}
-          {conversation?.lastMessage?.text}{" "}
-        </p>
-      </div>
-      <div className="flex flex-col justify-between items-end h-full">
-        <p
-          className={`text-sm whitespace-nowrap ${
-            conversation?.unseenMessages > 0
-              ? "text-text font-bold"
-              : "text-text/70"
-          }`}
-        >
-          {messageTime}
-        </p>
-        {conversation?.unseenMessages > 0 && (
-          <div className="h-4 w-4 bg-primary rounded-full flex items-center justify-center text-sm">
-            {conversation?.unseenMessages}
+
+      {/* Chat Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-[16px] font-semibold text-wa-text-primary-light dark:text-wa-text-primary-dark truncate capitalize">
+            {otherUser?.name || "Unknown"}
+          </h3>
+          <span className={`text-[12px] whitespace-nowrap ${
+            conversation?.unseenMessages > 0 ? "text-wa-teal font-semibold" : "text-wa-text-secondary-light dark:text-wa-text-secondary-dark"
+          }`}>
+            {formatTime(lastMsg?.createdAt || conversation?.updatedAt)}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1 text-[13px] text-wa-text-secondary-light dark:text-wa-text-secondary-dark truncate">
+            {isSentByMe && !isTyping && (
+              <span className="flex-shrink-0 inline-flex items-center">
+                {lastMsg?.seen ? (
+                  <IoCheckmarkDone size={16} className="text-wa-blue" />
+                ) : (
+                  <IoCheckmarkDone size={16} className="text-wa-text-secondary-light dark:text-wa-text-secondary-dark" />
+                )}
+              </span>
+            )}
+            <p className="truncate leading-tight">
+              {renderSnippet()}
+            </p>
           </div>
-        )}
+
+          {conversation?.unseenMessages > 0 && (
+            <span className="flex-shrink-0 bg-wa-badge text-white font-bold text-[11px] min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center ml-2">
+              {conversation.unseenMessages}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

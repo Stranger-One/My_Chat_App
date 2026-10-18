@@ -1,150 +1,174 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { IoSearch } from "react-icons/io5";
-import ChatUser from "./ChatUser";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  findConversation,
-  getAllConversation,
-} from "../services/messageServices";
-import { setAllConversation, setAllUserStatus } from "../store/globalSlice";
+import { setAllUserStatus } from "../store/globalSlice";
 import { useSocket } from "../contexts/SocketProvider";
-import UserStatus from "./UserStatus";
-import { IoIosArrowDown } from "react-icons/io";
-import { getAllStatus } from "../services/UpdateServeces";
-import toast from "react-hot-toast";
+import { BsPlusLg } from "react-icons/bs";
+import { useNavigate, useParams } from "react-router-dom";
+import moment from "moment";
 
-const UpdatesSection = ({ className }) => {
+const UpdatesSection = ({ className = "" }) => {
   const userData = useSelector((state) => state.global.userData);
-  const allUserStatus = useSelector(state => state.global.allUserStatus)
+  const allUserStatus = useSelector((state) => state.global.allUserStatus);
   const dispatch = useDispatch();
   const socket = useSocket();
-  const [unseenStatus, setUnseenStatus] = useState([]);
-  const [seenStatus, setSeenStatus] = useState([]);
+  const navigate = useNavigate();
+  const { statusUserId } = useParams();
 
-  const [isSeenUpdatedOpen, setIsSeenUpdatedOpen] = useState(true);
-  const [isRecentUpdatedOpen, setIsRecentUpdatedOpen] = useState(true);
+  const handleGetStatus = useCallback(
+    (response) => {
+      dispatch(setAllUserStatus(response || []));
+    },
+    [dispatch]
+  );
 
-  // console.log("allUserStatus", allUserStatus);
+  useEffect(() => {
+    if (socket) {
+      socket.emit("get_status");
+      socket.on("get_status", handleGetStatus);
 
-  const myStatus = {
-    user: userData,
-    file: "",
-    message: "add a status",
-    seen: [],
-    _id: "674bf0db9af56910918c7d6e",
-    createdAt: "2024-12-01T05:15:07.914Z",
+      return () => {
+        socket.off("get_status", handleGetStatus);
+      };
+    }
+  }, [socket, handleGetStatus]);
+
+  // Separate my status from others
+  const myStatusObj = allUserStatus?.find(
+    (s) => s.userDetails?._id === userData?._id
+  );
+  const otherStatuses = allUserStatus?.filter(
+    (s) => s.userDetails?._id !== userData?._id
+  );
+
+  const formatTime = (time) => {
+    if (!time) return "Today";
+    const m = moment(time);
+    const now = moment();
+    if (now.isSame(m, "day")) {
+      return `Today, ${m.format("hh:mm A")}`;
+    }
+    return `Yesterday, ${m.format("hh:mm A")}`;
   };
-
-
-  // const fetchUpdates = async () => {
-  //   const allStatus = await getAllStatus()
-  //   console.log(allStatus);
-  // };
-
-  useEffect(()=>{
-    // fetchUpdates()
-    if(socket){  
-      socket.emit("get_status")
-    }
-  }, [])
-
-  const handleGetStatus = useCallback((response)=>{
-    // console.log("get_status", response);
-    dispatch(setAllUserStatus(response))
-  }, [])
-
-
-  useEffect(()=>{
-    if(socket){
-
-      socket.on("get_status", handleGetStatus)
-      
-      return ()=>{
-        socket.off("get_status", handleGetStatus)
-      }
-    }
-  }, [socket, handleGetStatus])
 
   return (
     <div
-      className={`${className} h-[calc(100vh-50px)] bg-secondary text-text md:h-full`}
+      className={`${className} w-full md:w-[380px] lg:w-[420px] h-full flex flex-col bg-wa-panel-light dark:bg-wa-panel-dark border-r border-wa-border-light dark:border-wa-border-dark flex-shrink-0 select-none`}
     >
-      <div className=" flex items-center p-4">
-        <h1 className="font-bold text-xl">Updates</h1>
+      {/* Header */}
+      <div className="h-[60px] px-4 flex items-center justify-between border-b border-wa-border-light dark:border-wa-border-dark bg-wa-header-light dark:bg-wa-header-dark">
+        <h1 className="text-xl font-bold text-wa-text-primary-light dark:text-wa-text-primary-dark">
+          Status
+        </h1>
+        <button
+          onClick={() => navigate("/updates/add")}
+          title="Add status"
+          className="p-2 rounded-full text-wa-text-secondary-light dark:text-wa-text-secondary-dark hover:bg-wa-border-light dark:hover:bg-wa-surface transition-colors"
+        >
+          <BsPlusLg size={18} />
+        </button>
       </div>
-      <hr className="border-background" />
-      <div className="p-2">
-        <UserStatus status={myStatus} myStatus />
-      </div>
-      <div className="flex flex-col gap-1 p-1 overflow-auto md:h-[calc(100vh-150px)] ">
-        <div className="w-full border-t-2 border-background">
-          <div className="w-full p-1 flex items-center justify-between">
-            <p className="text-sm font-semibold">Recent Updates</p>
-            <label htmlFor="recentUpdates">
-              <div className={`rounded-full flex items-center justify-center cursor-pointer duration-100 p-1 hover:bg-background ${isRecentUpdatedOpen ? '' : '-rotate-90'}`}>
-                <IoIosArrowDown size={20} />
-              </div>
-            </label>
-            <input onChange={()=> setIsRecentUpdatedOpen((check)=> !check)} type="checkbox" id="recentUpdates" className=" hidden" />
+
+      <div className="flex-1 overflow-y-auto p-2">
+        {/* My Status Card */}
+        <div
+          onClick={() => {
+            if (myStatusObj?.files?.length > 0) {
+              navigate(`/updates/0/${userData?._id}`);
+            } else {
+              navigate("/updates/add");
+            }
+          }}
+          className="flex items-center gap-3 p-3 rounded-xl hover:bg-wa-hover-light dark:hover:bg-wa-surface cursor-pointer transition-colors"
+        >
+          <div className="relative w-12 h-12 flex-shrink-0">
+            <div
+              className={`w-12 h-12 rounded-full overflow-hidden p-0.5 ${
+                myStatusObj?.files?.length > 0
+                  ? "ring-2 ring-wa-teal"
+                  : "border border-wa-border-light dark:border-wa-border-dark"
+              }`}
+            >
+              <img
+                src={userData?.profilePic || "https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png"}
+                alt="My profile"
+                className="w-full h-full object-cover rounded-full"
+              />
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate("/updates/add");
+              }}
+              title="Add status"
+              className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-wa-teal text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform"
+            >
+              <BsPlusLg size={11} />
+            </button>
           </div>
-          <div
-            className={`${
-              isRecentUpdatedOpen ? "h-fit" : "h-0"
-            }  overflow-hidden duration-100 `}
-          >
-            {allUserStatus?.length > 0 ? (
-              allUserStatus.map((status, index) => (
-                <UserStatus key={index} status={status} index={index} />
-              ))
-            ) : (
-              <div className="w-full h-full flex items-center">
-                <h1 className="mx-auto">No Status Available</h1>
-              </div>
-            )}
+
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[15px] font-semibold text-wa-text-primary-light dark:text-wa-text-primary-dark truncate">
+              My status
+            </h3>
+            <p className="text-xs text-wa-text-secondary-light dark:text-wa-text-secondary-dark truncate">
+              {myStatusObj?.files?.length > 0
+                ? formatTime(myStatusObj.files[myStatusObj.files.length - 1]?.createdAt)
+                : "Tap to add status update"}
+            </p>
           </div>
         </div>
-        <div className="w-full border-y-2 border-background">
-          <div className="w-full p-1 flex items-center justify-between">
-            <p className="text-sm font-semibold">Seen Updates</p>
-            <label htmlFor="seenUpdates">
-              <div className={`rounded-full flex items-center justify-center cursor-pointer duration-100 p-1 hover:bg-background ${isSeenUpdatedOpen ? '' : '-rotate-90'}`}>
-                <IoIosArrowDown size={20} />
-              </div>
-            </label>
-            <input onChange={()=> setIsSeenUpdatedOpen((check)=> !check)} type="checkbox" id="seenUpdates" className=" hidden" />
-          </div>
-          <div
-            className={`${
-              isSeenUpdatedOpen ? "h-fit" : "h-0"
-            }  overflow-hidden duration-100 `}
-          >
-            {/* <UserStatus status={myStatus} />
-            <UserStatus status={myStatus} />
-            <UserStatus status={myStatus} />
-            <UserStatus status={myStatus} />
-            <UserStatus status={myStatus} />
-            <UserStatus status={myStatus} />
-            <UserStatus status={myStatus} />
-            <UserStatus status={myStatus} />
-            <UserStatus status={myStatus} /> */}
-          </div>
+
+        <div className="my-2 border-t border-wa-border-light dark:border-wa-border-dark"></div>
+
+        {/* Recent Updates Header */}
+        <div className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-wa-teal">
+          Recent updates
         </div>
-        {/* {allConversation?.length > 0 ? (
-          allConversation?.map((conversation, index) => (
-            <UserStatus
-              setSearchQuery={setSearchQuery}
-              key={index}
-              conversation={conversation}
-            />
-          ))
+
+        {/* Other Contacts Status List */}
+        {otherStatuses && otherStatuses.length > 0 ? (
+          otherStatuses.map((status, index) => {
+            const isSelected = statusUserId === status.userDetails?._id;
+            const lastFile = status.files?.[status.files.length - 1];
+
+            return (
+              <div
+                key={status.userDetails?._id || index}
+                onClick={() =>
+                  navigate(`/updates/${index}/${status.userDetails?._id}`)
+                }
+                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
+                  isSelected
+                    ? "bg-wa-hover-light dark:bg-wa-surface"
+                    : "hover:bg-wa-hover-light dark:hover:bg-wa-hover-dark"
+                }`}
+              >
+                {/* Status Avatar with green WhatsApp status ring */}
+                <div className="w-12 h-12 rounded-full p-0.5 ring-2 ring-wa-teal flex-shrink-0 overflow-hidden">
+                  <img
+                    src={status.userDetails?.profilePic || "https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png"}
+                    alt={status.userDetails?.name}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-[15px] font-semibold text-wa-text-primary-light dark:text-wa-text-primary-dark truncate capitalize">
+                    {status.userDetails?.name}
+                  </h3>
+                  <p className="text-xs text-wa-text-secondary-light dark:text-wa-text-secondary-dark truncate">
+                    {formatTime(lastFile?.createdAt)}
+                  </p>
+                </div>
+              </div>
+            );
+          })
         ) : (
-          <div className="text-center text-gray-400 text-lg p-2">
-            No conversations
+          <div className="flex flex-col items-center justify-center py-12 text-center text-wa-text-secondary-light dark:text-wa-text-secondary-dark text-xs px-4">
+            <p className="font-semibold text-sm mb-1">No updates yet</p>
+            <p>Status updates from your contacts will appear here.</p>
           </div>
-        )} */}
-        {/* <div className="w-full h-fit ">
-          Lorem ipsum dolor sit amet consectetur, adipisicing elit. Modi dignissimos officia, provident ipsa esse earum veniam exercitationem rerum voluptates quo iste. Reprehenderit aperiam autem quo impedit incidunt numquam repellat maxime placeat repudiandae unde dolores iusto architecto, dolore vel nostrum saepe facere quibusdam deleniti illum nesciunt, adipisci harum sed! Nostrum cum aperiam excepturi maxime, tempora quia corrupti! Quisquam dolore aut, at fugit pariatur recusandae neque hic dignissimos animi accusantium voluptatum eum, dolores ducimus dolor, minus veritatis? Cumque veniam, voluptas ullam nihil id quod accusamus debitis, saepe quos molestias sint ipsam tempora culpa suscipit exercitationem atque? Obcaecati quo quas libero error reiciendis. Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptatum cumque rem odio quod modi sed fugit veniam eum, sequi, velit necessitatibus quaerat veritatis tempore nulla reprehenderit repudiandae animi laboriosam commodi debitis laborum, omnis similique mollitia esse. Cumque ex aspernatur sint neque consequatur odio distinctio quaerat at dolorum natus nemo dicta id laborum provident modi dolor, suscipit sunt dolorem, nam beatae, maxime voluptate nesciunt quas reiciendis! Repudiandae aperiam numquam quae maiores minus, quibusdam molestiae, velit voluptatibus commodi ad eos. Provident laborum quidem, quibusdam dolor necessitatibus perferendis quaerat sit tempora fugit asperiores dolore magni, minima, facere eos? Ullam, corrupti! Repellat, error quod.
-        </div> */}
+        )}
       </div>
     </div>
   );

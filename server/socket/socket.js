@@ -137,11 +137,13 @@ io.on("connection", async (socket) => {
         const user = await User.findById(_id).select("-password")
 
         const details = {
-            name: user.name,
-            email: user.email,
-            _id: user._id,
-            profilePic: user.profilePic,
-            online: onlineUsers.has(_id)
+            name: user?.name,
+            email: user?.email,
+            _id: user?._id,
+            profilePic: user?.profilePic,
+            about: user?.about || "Hey there! I am using WhatsApp.",
+            lastSeen: user?.lastSeen,
+            online: onlineUsers.has(_id?.toString())
         }
         socket.emit("chat-user-details", details)
 
@@ -150,7 +152,13 @@ io.on("connection", async (socket) => {
                 { sender: userDetails?._id, receiver: _id },
                 { sender: _id, receiver: userDetails?._id }
             ]
-        }).populate("messages").sort({ createdAt: -1 })
+        }).populate({
+            path: "messages",
+            populate: {
+                path: "replyTo",
+                select: "text file sender createdAt"
+            }
+        }).sort({ createdAt: -1 })
         // console.log("conversation", conversation)
 
         socket.emit("receive-chat-messages", conversation)
@@ -165,6 +173,7 @@ io.on("connection", async (socket) => {
             receiver: messageDetails?.receiver,
             text: messageDetails?.text,
             file: messageDetails?.file,
+            replyTo: messageDetails?.replyTo || null,
             createdAt: Date.now()
         })
         await message.save()
@@ -217,7 +226,13 @@ io.on("connection", async (socket) => {
                     receiver: messageDetails?.sender
                 }
             ]
-        }).populate("messages").sort({ createdAt: -1 })
+        }).populate({
+            path: "messages",
+            populate: {
+                path: "replyTo",
+                select: "text file sender createdAt"
+            }
+        }).sort({ createdAt: -1 })
         // console.log("getConversation", getConversation)
 
         io.to(messageDetails?.sender).to(messageDetails?.receiver).emit("receive-chat-messages", conversation)
@@ -429,11 +444,102 @@ io.on("connection", async (socket) => {
                     receiver: data.chatUserId
                 }
             ]
-        }).populate("messages").sort({ updateAt: -1 })
+        }).populate({
+            path: "messages",
+            populate: {
+                path: "replyTo",
+                select: "text file sender createdAt"
+            }
+        }).sort({ updatedAt: -1 })
         // console.log("conversation", conversation)
 
 
         io.to(data.chatUserId).to(data.seenUserId).emit("receive-chat-messages", conversation)
+
+        // Typing indicators
+        socket.on("typing", ({ senderId, receiverId }) => {
+            io.to(receiverId).emit("typing", { senderId });
+        });
+
+        socket.on("stop-typing", ({ senderId, receiverId }) => {
+            io.to(receiverId).emit("stop-typing", { senderId });
+        });
+
+        // Message reaction
+        socket.on("message-reaction", async ({ messageId, emoji, userId, receiverId }) => {
+            try {
+                const message = await Message.findById(messageId);
+                if (message) {
+                    if (!message.reactions) message.reactions = [];
+                    const idx = message.reactions.findIndex(
+                        (r) => r.user.toString() === userId.toString()
+                    );
+                    if (idx > -1) {
+                        if (message.reactions[idx].emoji === emoji) {
+                            message.reactions.splice(idx, 1);
+                        } else {
+                            message.reactions[idx].emoji = emoji;
+                        }
+                    } else {
+                        message.reactions.push({ emoji, user: userId });
+                    }
+                    await message.save();
+
+                    const conversation = await Conversation.findOne({
+                        $or: [
+                            { sender: userId, receiver: receiverId },
+                            { sender: receiverId, receiver: userId }
+                        ]
+                    }).populate({
+                        path: "messages",
+                        populate: {
+                            path: "replyTo",
+                            select: "text file sender createdAt"
+                        }
+                    }).sort({ updatedAt: -1 });
+
+                    io.to(userId).to(receiverId).emit("receive-chat-messages", conversation);
+                }
+            } catch (err) {
+                console.error("Error in message-reaction:", err);
+            }
+        });
+
+        // Delete message
+        socket.on("delete-message", async ({ messageId, deleteForEveryone, userId, receiverId }) => {
+            try {
+                const message = await Message.findById(messageId);
+                if (message) {
+                    if (deleteForEveryone && message.sender.toString() === userId.toString()) {
+                        message.isDeleted = true;
+                        message.text = "This message was deleted";
+                        message.file = { fileName: "", fileType: "", fileUrl: "", fileSize: 0 };
+                    } else {
+                        if (!message.deletedFor.includes(userId)) {
+                            message.deletedFor.push(userId);
+                        }
+                    }
+                    await message.save();
+
+                    const conversation = await Conversation.findOne({
+                        $or: [
+                            { sender: userId, receiver: receiverId },
+                            { sender: receiverId, receiver: userId }
+                        ]
+                    }).populate({
+                        path: "messages",
+                        populate: {
+                            path: "replyTo",
+                            select: "text file sender createdAt"
+                        }
+                    }).sort({ updatedAt: -1 });
+
+                    io.to(userId).to(receiverId).emit("receive-chat-messages", conversation);
+                }
+            } catch (err) {
+                console.error("Error in delete-message:", err);
+            }
+        });
 
         const seenUserConversation = await Conversation.aggregate([
             {
@@ -764,11 +870,22 @@ io.on("connection", async (socket) => {
 
 
 
-    socket.on("disconnect", () => {
+    socket.on("call-signal", ({ to, signal, from }) => {
+        io.to(to).emit("call-signal", { signal, from });
+    });
+
+    socket.on("disconnect", async () => {
         console.log("Client disconnected", socket.id)
-        // console.log("socket.handshake", socket.handshake);
-        onlineUsers.delete(userDetails?._id)
-        io.emit("onlineUsers", Array.from(onlineUsers))
+        if (userDetails?._id) {
+            onlineUsers.delete(userDetails._id.toString());
+            onlineUsers.delete(userDetails._id);
+            io.emit("onlineUsers", Array.from(onlineUsers));
+            try {
+                await User.findByIdAndUpdate(userDetails._id, { lastSeen: new Date() });
+            } catch (e) {
+                console.error("Error updating lastSeen:", e);
+            }
+        }
         for (let userId in users) {
             if (users[userId].socketId === socket.id) {
                 delete users[userId];

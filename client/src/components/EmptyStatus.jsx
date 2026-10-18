@@ -1,25 +1,18 @@
 import React from "react";
-import { FaArrowLeft } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { RiDonutChartFill } from "react-icons/ri";
 
 const EmptyStatus = () => {
-  const navigate = useNavigate()
   return (
-    <div className="w-full h-full ">
-      <div className="chat-header bg-secondary shadow-md w-full flex gap-2 items-center p-3">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 bg-surface hover:bg-background cursor-pointer rounded-full"
-        >
-          <FaArrowLeft size={20} className="text-text" />
-        </button>
+    <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-wa-bg-light dark:bg-wa-bg-dark text-center select-none">
+      <div className="w-20 h-20 rounded-full bg-wa-teal/10 flex items-center justify-center text-wa-teal mb-4">
+        <RiDonutChartFill size={44} />
       </div>
-
-      <div className="flex justify-center items-center">
-        <h1 className="text-2xl font-semibold capitalize">
-          Select user To See Updates
-        </h1>
-      </div>
+      <h3 className="text-xl font-light text-wa-text-primary-light dark:text-wa-text-primary-dark mb-1">
+        No status selected
+      </h3>
+      <p className="text-xs text-wa-text-secondary-light dark:text-wa-text-secondary-dark max-w-xs">
+        Click on a contact from the list on the left to view their status updates.
+      </p>
     </div>
   );
 };

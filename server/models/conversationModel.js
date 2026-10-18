@@ -27,6 +27,31 @@ const messageSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    replyTo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Message',
+        default: null
+    },
+    reactions: [
+        {
+            emoji: { type: String, required: true },
+            user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+        }
+    ],
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    deletedFor: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
+    callInfo: {
+        type: Object,
+        default: null
+    },
     sender: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -39,8 +64,8 @@ const messageSchema = new mongoose.Schema({
     },
     createdAt: {
         type: Number,
+        default: () => Date.now()
     }
-
 })
 
 const conversationSchema = new mongoose.Schema({

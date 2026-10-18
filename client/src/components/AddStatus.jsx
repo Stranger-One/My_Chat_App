@@ -1,217 +1,144 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ImFileEmpty, ImFileMusic, ImFileVideo } from "react-icons/im";
-import { IoClose } from "react-icons/io5";
-import { RiLinksFill } from "react-icons/ri";
-import Loader from "./Loader";
-import { LuSend } from "react-icons/lu";
+import React, { useState, useRef } from "react";
+import { BsArrowLeft, BsImages } from "react-icons/bs";
+import { IoSend, IoClose } from "react-icons/io5";
 import { useSelector } from "react-redux";
-import uploadToCloudinary from "../services/uploadToCloudinary";
-import { addStatus } from "../services/UpdateServeces";
-import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useSocket } from "../contexts/SocketProvider";
-import { FaArrowLeft } from "react-icons/fa";
+import axios from "axios";
+import Loader from "./Loader";
+import toast from "react-hot-toast";
 
 const AddStatus = () => {
-  const [messageText, setMessageText] = useState("");
+  const [caption, setCaption] = useState("");
   const [fileSelected, setFileSelected] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
-  const [sendingUpdate, setSendingUpdate] = useState(false);
-  const [btnBg, setBtnBg] = useState("bg-primary");
-  const [fileDuration, setFileDuration] = useState(0)
+  const [uploading, setUploading] = useState(false);
   const userData = useSelector((state) => state.global.userData);
   const navigate = useNavigate();
   const socket = useSocket();
-  const durationRef = useRef();
-
-  useEffect(() => {
-    if (durationRef.current) {
-      // console.log("durationRef", durationRef.current);
-      durationRef.current.addEventListener("loadedmetadata", () => {
-        // console.log(durationRef.current.duration);
-        setFileDuration(durationRef.current.duration)
-      });
-    }
-  }, [durationRef.current, fileSelected]);
+  const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-
-    if (!selectedFile) return;
-    setFileSelected(selectedFile);
-
-    // Generate preview for images
-    // if (selectedFile.type.startsWith("image/")) {
-    const filePreview = URL.createObjectURL(selectedFile);
-    setFilePreview(filePreview);
-    // } else {
-    // For non-image files, reset the preview
-    // setFilePreview(null);
-    // }
+    const file = e.target.files[0];
+    if (!file) return;
+    setFileSelected(file);
+    setFilePreview(URL.createObjectURL(file));
   };
 
-  const handleUpdateStatus = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (sendingUpdate) return;
-    setSendingUpdate(true);
-    // Send the update status to the server
-    // ...
-
-    const data = new FormData();
-    data.append("file", fileSelected);
-
-    const file = await uploadToCloudinary(data);
-    // console.log(file);
-
-    // console.log({
-    //   userId: userData._id,
-    //   file: file.path,
-    //   message: messageText,
-    // });
-
-    const statusDetails = {
-      user: userData._id,
-      file: {
-        fileType: fileSelected.type,
-        fileUrl: file.path,
-        fileDuration
-      },
-      message: messageText,
-    };
-
-    // const response = await addStatus({
-    //   userId: userData._id,
-    //   file: {
-    //     fileType: fileSelected.type,
-    //     fileUrl: file.path
-    //   },
-    //   message: messageText,
-    // });
-    // console.log("statusDetails", statusDetails);
-
-    socket.emit("add_status", statusDetails);
-    setSendingUpdate(false);
-  };
-
-  const handleAddStatus = useCallback((response) => {
-    // console.log(response);
-
-    if (response.success) {
-      toast.success(response.message);
-
-      setFileSelected(null);
-      setFilePreview(null);
-      setMessageText(null);
-      navigate("/updates");
-    } else {
-      toast.error(response.message);
+    if (!fileSelected && !caption.trim()) {
+      toast.error("Please choose a file or enter text");
+      return;
     }
-  }, []);
 
-  useEffect(() => {
-    if(socket){
-      socket.on("add_status", handleAddStatus);
-      
-      return () => {
-        socket.off("add_status", handleAddStatus);
+    setUploading(true);
+    let uploadedUrl = "";
+
+    try {
+      if (fileSelected) {
+        const data = new FormData();
+        data.append("file", fileSelected);
+        const res = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/upload/upload-media`,
+          data
+        );
+        uploadedUrl = res.data?.file?.path || res.data?.url || "";
+      }
+
+      const statusDetails = {
+        user: userData?._id,
+        file: {
+          fileType: fileSelected?.type || "text/plain",
+          fileUrl: uploadedUrl,
+          fileDuration: 5,
+        },
+        message: caption.trim(),
       };
-    }
 
-  }, [socket, handleAddStatus]);
+      if (socket) {
+        socket.emit("add_status", statusDetails);
+        toast.success("Status added successfully!");
+        navigate("/updates");
+      }
+    } catch (err) {
+      console.error("Error adding status:", err);
+      toast.error("Failed to add status");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
-    <div className="w-full h-full grid grid-rows-[60px_auto_50px] ">
-      <div className="header bg-secondary shadow-md w-full flex gap-2 items-center p-3">
+    <div className="w-full h-full flex flex-col bg-wa-bg-light dark:bg-wa-bg-dark text-wa-text-primary-light dark:text-wa-text-primary-dark select-none">
+      {/* Header */}
+      <div className="h-[60px] px-4 border-b border-wa-border-light dark:border-wa-border-dark flex items-center gap-3 bg-wa-header-light dark:bg-wa-header-dark">
         <button
-          onClick={() => navigate(-1)}
-          className="p-2 bg-surface hover:bg-background cursor-pointer rounded-full"
+          onClick={() => navigate("/updates")}
+          className="p-2 rounded-full hover:bg-wa-surface text-wa-text-secondary-light dark:text-wa-text-secondary-dark"
         >
-          <FaArrowLeft size={20} className="text-text" />
+          <BsArrowLeft size={19} />
         </button>
+        <h2 className="text-lg font-bold">New Status</h2>
       </div>
-      <div className="">
-        {fileSelected ? (
-          <div className="w-full h-full bg-secondary p-2">
-            <div className="flex item-center justify-between">
-              <div className=""></div>
-              <button
-                onClick={() => {
-                  setFileSelected(null);
-                  setFilePreview(null);
-                }}
-                className=" mb-2 hover:bg-background duration-100 p-1 rounded-full"
-              >
-                <IoClose size={24} />
-              </button>
-            </div>
-            <div className="w-full relative h-[400px]">
-              {fileSelected.type.startsWith("image/") ? (
-                <img
-                  src={filePreview}
-                  alt="Preview"
-                  className="w-full h-full object-contain rounded-lg"
-                />
-              ) : fileSelected.type.startsWith("video/") ? (
-                <video
-                  ref={durationRef}
-                  controls
-                  width="500"
-                  src={filePreview}
-                  className="w-full h-full object-contain rounded-lg"
-                />
-              ) :  fileSelected.type.startsWith("audio/") ? (
-                <audio
-                  ref={durationRef}
-                  controls
-                  src={filePreview}
-                  className="w-full h-full object-contain rounded-lg"
-                />
-              ) : null}
-            </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6">
+        {filePreview ? (
+          <div className="relative max-w-md w-full h-[360px] bg-black rounded-2xl overflow-hidden shadow-wa-modal flex items-center justify-center">
+            <button
+              onClick={() => {
+                setFileSelected(null);
+                setFilePreview(null);
+              }}
+              className="absolute top-3 right-3 p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80 z-20"
+            >
+              <IoClose size={20} />
+            </button>
+            {fileSelected?.type?.includes("video") ? (
+              <video src={filePreview} controls className="w-full h-full object-contain" />
+            ) : (
+              <img src={filePreview} alt="Preview" className="w-full h-full object-contain" />
+            )}
           </div>
         ) : (
-          <div className=" w-full h-full flex items-center justify-center">
-            <h1 className="text-2xl capitalize font-semibold ">
-              select file to update
-            </h1>
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full max-w-md h-64 border-2 border-dashed border-wa-border-light dark:border-wa-border-dark rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-wa-teal transition-colors"
+          >
+            <div className="w-16 h-16 rounded-full bg-wa-teal/10 text-wa-teal flex items-center justify-center">
+              <BsImages size={28} />
+            </div>
+            <p className="font-semibold text-sm">Click to select photo or video</p>
+            <p className="text-xs text-wa-text-secondary-light dark:text-wa-text-secondary-dark">
+              Upload from your device
+            </p>
           </div>
         )}
-      </div>
-      <div className="footer w-full mt-1">
-        <form
-          onSubmit={handleUpdateStatus}
-          className="w-[80%] mx-auto flex gap-4 relative"
-        >
-          <div className="flex w-full rounded-md bg-secondary items-center px-2">
-            <input
-              type="text"
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              placeholder="Type a messages..."
-              className="w-full p-2 outline-none border-none bg-transparent placeholder:text-text/70 "
-            />
-            <label htmlFor="file" className="cursor-pointer">
-              <RiLinksFill size={24} className="text-text" />
-            </label>
-            <input
-              type="file"
-              className="hidden"
-              id="file"
-              // value={fileSelected}
-              onChange={handleFileChange}
-            />
-          </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,video/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
+        {/* Caption & Send */}
+        <form onSubmit={handleSubmit} className="w-full max-w-md flex items-center gap-2 mt-6">
+          <input
+            type="text"
+            placeholder="Add a caption..."
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-wa-panel-light dark:bg-wa-panel-dark border border-wa-border-light dark:border-wa-border-dark text-sm outline-none focus:border-wa-teal"
+          />
           <button
             type="submit"
-            className="bg-primary/60 p-1 rounded-full hover:rounded-lg duration-150"
+            disabled={uploading}
+            className="w-11 h-11 rounded-full bg-wa-teal hover:bg-wa-teal-hover text-white flex items-center justify-center shadow-md flex-shrink-0"
           >
-            <div
-              onMouseDown={() => setBtnBg("bg-primary/60")}
-              onMouseUp={() => setBtnBg("bg-primary")}
-              className={`${btnBg} p-2 rounded-full hover:rounded-lg duration-150`}
-            >
-              {sendingUpdate ? <Loader size={20} /> : <LuSend size={20} />}
-            </div>
+            {uploading ? <Loader size={20} /> : <IoSend size={18} className="ml-0.5" />}
           </button>
         </form>
       </div>

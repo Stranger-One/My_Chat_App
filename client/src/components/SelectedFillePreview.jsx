@@ -1,67 +1,50 @@
-import React from 'react'
-import { ImFileEmpty, ImFileMusic, ImFileVideo } from 'react-icons/im'
-import { IoClose } from 'react-icons/io5'
+import React from "react";
+import { ImFileEmpty, ImFileMusic, ImFileVideo } from "react-icons/im";
+import { IoClose } from "react-icons/io5";
 
-const SelectedFillePreview = ({fileSelected, filePreview, setFileSelected}) => {
+const SelectedFillePreview = ({ fileSelected, filePreview, setFileSelected }) => {
   return fileSelected ? (
-        <div className="w-[300px] absolute bottom-14 left-0 bg-secondary  rounded-t-lg p-2">
-          <div className="flex item-center justify-between">
-            <div className=""></div>
-            <button
-              onClick={() => setFileSelected(null)}
-              className=" mb-2 hover:bg-background duration-100 p-1 rounded-full"
-            >
-              <IoClose size={24} />
-            </button>
+    <div className="w-[320px] absolute bottom-16 left-4 bg-wa-panel-light dark:bg-wa-panel-dark text-wa-text-primary-light dark:text-wa-text-primary-dark border border-wa-border-light dark:border-wa-border-dark rounded-2xl p-3 shadow-wa-modal z-30">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold text-wa-teal uppercase tracking-wider">
+          Attachment preview
+        </span>
+        <button
+          onClick={() => setFileSelected(null)}
+          className="p-1 rounded-full hover:bg-wa-surface text-wa-text-secondary-light dark:text-wa-text-secondary-dark"
+        >
+          <IoClose size={20} />
+        </button>
+      </div>
+      <div className="h-[180px] rounded-xl overflow-hidden bg-black/5 dark:bg-black/30 flex items-center justify-center">
+        {fileSelected.type.startsWith("image/") ? (
+          <img
+            src={filePreview}
+            alt="Preview"
+            className="w-full h-full object-contain"
+          />
+        ) : fileSelected.type.startsWith("video/") ? (
+          <video
+            controls
+            src={filePreview}
+            className="w-full h-full object-contain"
+          />
+        ) : fileSelected.type.startsWith("audio/") ? (
+          <audio controls src={filePreview} className="w-full px-2" />
+        ) : (
+          <div className="flex flex-col items-center justify-center p-4 text-center">
+            <ImFileEmpty size={36} className="text-wa-teal mb-2" />
+            <p className="text-xs font-semibold truncate max-w-[240px]">
+              {fileSelected.name}
+            </p>
+            <p className="text-[11px] text-wa-text-secondary-light dark:text-wa-text-secondary-dark mt-0.5">
+              {(fileSelected.size / 1024 / 1024).toFixed(2)} MB
+            </p>
           </div>
-          <div className=" h-[200px]">
-            {fileSelected.type.startsWith("image/") ? (
-              <img
-                src={filePreview}
-                alt="Preview"
-                className="w-full h-full object-contain rounded-lg"
-              />
-            ) : fileSelected.type.startsWith("video/") ? (
-              <video
-                controls
-                width="500"
-                src={filePreview}
-                className="w-full h-full object-contain rounded-lg"
-              />
-            ) : fileSelected.type.startsWith("audio/") ? (
-              <audio
-                controls
-                src={filePreview}
-                className="w-full h-full object-contain rounded-lg"
-              />
-            ) : (
-              <div className="flex flex-col h-full w-full items-center justify-center px-4">
-                {
-                  <div className="file-icon mb-4">
-                    {fileSelected.type.startsWith("audio/") ? (
-                      <ImFileMusic size={30} />
-                    ) : fileSelected.type.startsWith("video/") ? (
-                      <ImFileVideo size={30} />
-                    ) : (
-                      <ImFileEmpty size={30} />
-                    )}
-                  </div>
-                }
-                <p className="line-clamp-1">
-                  File Name: {fileSelected.name}
-                </p>
-                <p className="line-clamp-1">
-                  File Type: {fileSelected.type}
-                </p>
-                <p className="line-clamp-1">
-                  File Size:{" "}
-                  {(fileSelected.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-  ) : null
-}
+        )}
+      </div>
+    </div>
+  ) : null;
+};
 
-export default SelectedFillePreview
+export default SelectedFillePreview;

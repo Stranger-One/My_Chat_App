@@ -1,4 +1,4 @@
-import { Conversation } from "../models/conversationModel.js";
+import { Conversation, Message } from "../models/conversationModel.js";
 import mongoose, { Mongoose } from "mongoose";
 
 export const getConversation = async (req, res) => {
@@ -16,7 +16,13 @@ export const getConversation = async (req, res) => {
                 { sender: sender, receiver: receiver },
                 { sender: receiver, receiver: sender }
             ]
-        }).populate("messages").sort({ updateAt: -1 })
+        }).populate({
+            path: "messages",
+            populate: {
+                path: "replyTo",
+                select: "text file sender createdAt"
+            }
+        }).sort({ updatedAt: -1 })
 
         if (!conversation) {
             return res.status(404).json({
@@ -262,6 +268,140 @@ export const deleteConversation = async (req, res) => {
             message: "Conversation deleted failed",
             error
         })
+    }
+};
+
+export const reactToMessage = async (req, res) => {
+    try {
+        const { messageId, emoji, userId } = req.body;
+        if (!messageId || !emoji || !userId) {
+            return res.status(400).json({
+                success: false,
+                message: "messageId, emoji and userId are required"
+            });
+        }
+
+        const message = await Message.findById(messageId);
+        if (!message) {
+            return res.status(404).json({
+                success: false,
+                message: "Message not found"
+            });
+        }
+
+        if (!message.reactions) {
+            message.reactions = [];
+        }
+
+        const existingReactionIndex = message.reactions.findIndex(
+            (r) => r.user.toString() === userId.toString()
+        );
+
+        if (existingReactionIndex > -1) {
+            if (message.reactions[existingReactionIndex].emoji === emoji) {
+                // Remove reaction if clicked the same emoji again
+                message.reactions.splice(existingReactionIndex, 1);
+            } else {
+                // Change emoji
+                message.reactions[existingReactionIndex].emoji = emoji;
+            }
+        } else {
+            message.reactions.push({ emoji, user: userId });
+        }
+
+        await message.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Reaction updated successfully",
+            data: message
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to react to message",
+            error: error.message
+        });
+    }
+};
+
+export const deleteMessage = async (req, res) => {
+    try {
+        const { messageId } = req.params;
+        const { deleteForEveryone, userId } = req.body;
+
+        const message = await Message.findById(messageId);
+        if (!message) {
+            return res.status(404).json({
+                success: false,
+                message: "Message not found"
+            });
+        }
+
+        if (deleteForEveryone) {
+            if (message.sender.toString() !== userId.toString()) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Only sender can delete for everyone"
+                });
+            }
+            message.isDeleted = true;
+            message.text = "This message was deleted";
+            message.file = { fileName: "", fileType: "", fileUrl: "", fileSize: 0 };
+        } else {
+            if (!message.deletedFor.includes(userId)) {
+                message.deletedFor.push(userId);
+            }
+        }
+
+        await message.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Message deleted successfully",
+            data: message
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to delete message",
+            error: error.message
+        });
+    }
+};
+
+export const clearChat = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const { userId } = req.body;
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({
+                success: false,
+                message: "Conversation not found"
+            });
+        }
+
+        // Add userId to deletedFor for all messages in conversation
+        await Message.updateMany(
+            { _id: { $in: conversation.messages } },
+            { $addToSet: { deletedFor: userId } }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Chat cleared successfully"
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to clear chat",
+            error: error.message
+        });
     }
 };
 

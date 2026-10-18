@@ -18,14 +18,16 @@ const callSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    // status: {
-    //     type: String,
-    //     enum: {
-    //         values: ['missedCall', 'incommingCall', 'outgoingCall'],
-    //         message: '{VALUE} is not supported'
-    //     },
-    //     required: true
-    // }
+    callType: {
+        type: String,
+        enum: ['voice', 'video'],
+        default: 'video'
+    },
+    status: {
+        type: String,
+        enum: ['missed', 'incoming', 'outgoing', 'declined', 'answered'],
+        default: 'answered'
+    }
 },{
     timestamps: true
 });

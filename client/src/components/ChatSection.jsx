@@ -1,72 +1,118 @@
 import React, { useEffect, useState } from "react";
-import { IoSearch } from "react-icons/io5";
+import { IoSearch, IoClose } from "react-icons/io5";
+import { BsPlusLg, BsFilter } from "react-icons/bs";
 import ChatUser from "./ChatUser";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  findConversation,
-  getAllConversation,
-} from "../services/messageServices";
+import { findConversation } from "../services/messageServices";
 import { setAllConversation } from "../store/globalSlice";
 import { useSocket } from "../contexts/SocketProvider";
+import { useNavigate } from "react-router-dom";
 
-const ChatSection = ({className}) => {
+const ChatSection = ({ className = "" }) => {
   const allConversation = useSelector((state) => state.global.allConversation);
   const userData = useSelector((state) => state.global.userData);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterUnread, setFilterUnread] = useState(false);
   const socket = useSocket();
 
-
   const handleFindConversations = async () => {
-    const response = await findConversation(searchQuery, userData._id);
-    // console.log("find conversations", response.users);
-    dispatch(setAllConversation(response?.users))
+    if (!searchQuery.trim()) return;
+    const response = await findConversation(searchQuery, userData?._id);
+    if (response?.users) {
+      dispatch(setAllConversation(response.users));
+    }
   };
 
-
   useEffect(() => {
-    if(searchQuery){
-      handleFindConversations()
-    } else {
-      if(socket){
-        socket.emit("request-all-conversation", userData?._id);
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        handleFindConversations();
+      } else if (socket && userData?._id) {
+        socket.emit("request-all-conversation", userData._id);
       }
-      
-    }
-  }, [searchQuery]);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, socket, userData?._id]);
+
+  const displayedConversations = filterUnread
+    ? allConversation?.filter((c) => (c?.unseenMessages || 0) > 0)
+    : allConversation;
 
   return (
-    <div className={`${className} h-[calc(100vh-50px)] bg-secondary text-text md:h-full`} >
-      <div className=" flex items-center p-4">
-        <h1 className="font-bold text-xl">Let's Chat</h1>
+    <div
+      className={`${className} w-full md:w-[380px] lg:w-[420px] h-full flex flex-col bg-wa-panel-light dark:bg-wa-panel-dark border-r border-wa-border-light dark:border-wa-border-dark flex-shrink-0 select-none`}
+    >
+      {/* Header */}
+      <div className="h-[60px] px-4 flex items-center justify-between border-b border-wa-border-light dark:border-wa-border-dark bg-wa-header-light dark:bg-wa-header-dark">
+        <h1 className="text-xl font-bold text-wa-text-primary-light dark:text-wa-text-primary-dark">
+          Chats
+        </h1>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setFilterUnread(!filterUnread)}
+            title={filterUnread ? "Show all chats" : "Filter unread chats"}
+            className={`p-2 rounded-full transition-colors ${
+              filterUnread
+                ? "bg-wa-teal text-white"
+                : "text-wa-text-secondary-light dark:text-wa-text-secondary-dark hover:bg-wa-border-light dark:hover:bg-wa-surface"
+            }`}
+          >
+            <BsFilter size={20} />
+          </button>
+          <button
+            onClick={() => navigate("/find-user")}
+            title="New Chat"
+            className="p-2 rounded-full text-wa-text-secondary-light dark:text-wa-text-secondary-dark hover:bg-wa-border-light dark:hover:bg-wa-surface transition-colors"
+          >
+            <BsPlusLg size={18} />
+          </button>
+        </div>
       </div>
-      <hr className="border-background" />
-      <div className="p-2">
-        <div className="w-full grid grid-cols-[20px_auto] bg-white/70 items-center px-2 gap-2 rounded-lg">
-          <IoSearch size={20} />
+
+      {/* WhatsApp Search Input Bar */}
+      <div className="p-2.5 border-b border-wa-border-light dark:border-wa-border-dark">
+        <div className="relative flex items-center bg-wa-surface rounded-lg px-3 py-1.5 focus-within:ring-1 focus-within:ring-wa-teal">
+          <IoSearch
+            size={18}
+            className="text-wa-text-secondary-light dark:text-wa-text-secondary-dark flex-shrink-0 mr-2"
+          />
           <input
-            type="search"
-            placeholder="Search"
-            className="bg-transparent text-black placeholder:text-black py-2 md:py-[6px] outline-none border-none"
+            type="text"
+            placeholder="Search or start new chat"
+            className="w-full bg-transparent text-[14px] text-wa-text-primary-light dark:text-wa-text-primary-dark placeholder:text-wa-text-secondary-light dark:placeholder:text-wa-text-secondary-dark outline-none"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="text-wa-text-secondary-light dark:text-wa-text-secondary-dark hover:text-wa-text-primary-light dark:hover:text-wa-text-primary-dark"
+            >
+              <IoClose size={18} />
+            </button>
+          )}
         </div>
       </div>
-      <hr className="border-background" />
-      <div className="flex flex-col gap-1 p-1 overflow-auto md:h-[calc(100vh-150px)] ">
-        {allConversation?.length > 0 ? (
-          allConversation?.map((conversation, index) => (
-            <ChatUser setSearchQuery={setSearchQuery} key={index} conversation={conversation} />
+
+      {/* Chat List */}
+      <div className="flex-1 overflow-y-auto">
+        {displayedConversations && displayedConversations.length > 0 ? (
+          displayedConversations.map((conversation, index) => (
+            <ChatUser
+              key={conversation?._id || index}
+              conversation={conversation}
+              setSearchQuery={setSearchQuery}
+            />
           ))
         ) : (
-          <div className="text-center text-gray-400 text-lg p-2">
-            No conversations
+          <div className="flex flex-col items-center justify-center h-48 px-4 text-center text-wa-text-secondary-light dark:text-wa-text-secondary-dark text-sm">
+            <p className="font-medium text-base mb-1">No chats found</p>
+            <p>Click the '+' button to start a new chat with your contacts.</p>
           </div>
         )}
-        {/* <div className="w-full h-fit ">
-          Lorem ipsum dolor sit amet consectetur, adipisicing elit. Modi dignissimos officia, provident ipsa esse earum veniam exercitationem rerum voluptates quo iste. Reprehenderit aperiam autem quo impedit incidunt numquam repellat maxime placeat repudiandae unde dolores iusto architecto, dolore vel nostrum saepe facere quibusdam deleniti illum nesciunt, adipisci harum sed! Nostrum cum aperiam excepturi maxime, tempora quia corrupti! Quisquam dolore aut, at fugit pariatur recusandae neque hic dignissimos animi accusantium voluptatum eum, dolores ducimus dolor, minus veritatis? Cumque veniam, voluptas ullam nihil id quod accusamus debitis, saepe quos molestias sint ipsam tempora culpa suscipit exercitationem atque? Obcaecati quo quas libero error reiciendis. Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptatum cumque rem odio quod modi sed fugit veniam eum, sequi, velit necessitatibus quaerat veritatis tempore nulla reprehenderit repudiandae animi laboriosam commodi debitis laborum, omnis similique mollitia esse. Cumque ex aspernatur sint neque consequatur odio distinctio quaerat at dolorum natus nemo dicta id laborum provident modi dolor, suscipit sunt dolorem, nam beatae, maxime voluptate nesciunt quas reiciendis! Repudiandae aperiam numquam quae maiores minus, quibusdam molestiae, velit voluptatibus commodi ad eos. Provident laborum quidem, quibusdam dolor necessitatibus perferendis quaerat sit tempora fugit asperiores dolore magni, minima, facere eos? Ullam, corrupti! Repellat, error quod.
-        </div> */}
       </div>
     </div>
   );

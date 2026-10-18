@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AiOutlineFullscreenExit, AiOutlineFullscreen } from "react-icons/ai";
+import { IoCall, IoVideocam } from "react-icons/io5";
 import {
   setCallAccepted,
   setCallActive,
@@ -21,6 +22,7 @@ const CallPageLayout = () => {
   const callIncomming = useSelector((state) => state.global.callIncomming);
   const callDetails = useSelector((state) => state.global.callDetails);
   const callAccepted = useSelector((state) => state.global.callAccepted);
+  const callType = useSelector((state) => state.global.callType);
   const [isMinimized, setIsMinimized] = useState(false);
   const dispatch = useDispatch();
 
@@ -33,65 +35,81 @@ const CallPageLayout = () => {
     duration,
     startTimer,
     stopTimer,
+    playRingtone,
+    stopRingtone,
   } = useMedia();
-  const [incommingCall, setIncommingCall] = useState(null);
+  const [incomingPeerCall, setIncomingPeerCall] = useState(null);
 
-  // useEffect(() => {
-  //   console.log("duration :: ", duration);
-  // }, [duration]);
-
-  const fetchCallLogs = async () => {
+  const fetchCallLogs = useCallback(async () => {
+    if (!userData?._id) return;
     try {
       const callLogs = await getCallLog(userData._id);
-      // console.log("call log response", callLogs);
-      dispatch(setCallLogs(callLogs.data));
+      if (callLogs?.data) {
+        dispatch(setCallLogs(callLogs.data));
+      }
     } catch (error) {
       console.error("Error fetching call logs:", error);
     }
-  };
+  }, [userData?._id, dispatch]);
 
-  const handleIncommingCall = useCallback((callDetails) => {
-    // console.log("incomming call...", callDetails);
-    dispatch(setCallIncomming(true));
-    dispatch(setCallDetails(callDetails));
-  }, [dispatch]);
+  const handleIncommingCall = useCallback(
+    (details) => {
+      dispatch(setCallIncomming(true));
+      dispatch(setCallDetails(details));
+      playRingtone("incoming");
+    },
+    [dispatch, playRingtone]
+  );
 
   const declineIncommingCall = () => {
-    if (socket) {
-      // console.log("call declined");
+    stopRingtone();
+    if (socket && callDetails) {
       socket.emit("decline_call", callDetails);
       dispatch(setCallDetails(null));
       dispatch(setCallIncomming(false));
-      dispatch(setCallStatus("End call"));
+      dispatch(setCallStatus("Call declined"));
     }
   };
 
   const handleDeclineCall = useCallback(async () => {
-    // console.log("call declined");
-    dispatch(setCallStatus("End call"));
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    stopRingtone();
+    stopTimer();
+    dispatch(setCallStatus("Call declined"));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     dispatch(setCallActive(false));
     dispatch(setCallDetails(null));
     setStream(null);
-    myVideoRef.current.srcObject = null;
-    remoteVideoRef.current.srcObject = null;
-  }, [dispatch, setStream, myVideoRef, remoteVideoRef]);
+    if (myVideoRef.current) myVideoRef.current.srcObject = null;
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+  }, [dispatch, stopRingtone, stopTimer, setStream, myVideoRef, remoteVideoRef]);
 
   const answerIncommingCall = async () => {
-    if (socket) {
-      // console.log("call answered :: userData.id :: ", userData);
+    stopRingtone();
+    if (socket && incomingPeerCall) {
       dispatch(setCallIncomming(false));
       dispatch(setCallAccepted(true));
       dispatch(setCallActive(true));
+
+      const isVoice = callDetails?.callType === "voice";
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        setStream(stream);
-        myVideoRef.current.srcObject = stream;
-        incommingCall.answer(stream);
-        incommingCall?.on("stream", (remoteStream) => {
-          remoteVideoRef.current.srcObject = remoteStream;
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: !isVoice,
+          audio: true,
         });
-        dispatch(setCallStatus("Answered"));
+        setStream(stream);
+
+        if (myVideoRef.current && !isVoice) {
+          myVideoRef.current.srcObject = stream;
+        }
+
+        incomingPeerCall.answer(stream);
+        incomingPeerCall.on("stream", (remoteStream) => {
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteStream;
+          }
+        });
+
+        dispatch(setCallStatus("Connected"));
         startTimer();
       } catch (error) {
         console.error("Error answering call:", error);
@@ -99,26 +117,30 @@ const CallPageLayout = () => {
     }
   };
 
-  const handleAnswerCall = () => {
-    // console.log("call answered :: userData.id :: ", userData);
+  const handleAnswerCall = useCallback(() => {
+    stopRingtone();
     dispatch(setCallIncomming(false));
     dispatch(setCallActive(true));
     dispatch(setCallAccepted(true));
-    dispatch(setCallStatus("Answered"));
+    dispatch(setCallStatus("Connected"));
     startTimer();
-  };
+  }, [dispatch, stopRingtone, startTimer]);
 
   const endCall = async () => {
-    if (socket) {
+    stopRingtone();
+    stopTimer();
+    if (socket && callDetails) {
       socket.emit("call_end", callDetails);
-      const callLog = {
+      const logData = {
         duration,
-        callerId: callDetails.from.id,
-        receiverId: callDetails.to.id,
+        callerId: callDetails.from?.id,
+        receiverId: callDetails.to?.id,
         startTime: `${callDetails.callDate} ${callDetails.callTime}`,
+        callType: callDetails.callType || "video",
+        status: duration > 0 ? "answered" : "missed",
       };
       try {
-        await addCall(callLog);
+        await addCall(logData);
       } catch (error) {
         console.error("Error adding call log:", error);
       }
@@ -126,31 +148,33 @@ const CallPageLayout = () => {
   };
 
   const handleEndCall = useCallback(async () => {
-    // console.log("call end");
+    stopRingtone();
     stopTimer();
-    dispatch(setCallStatus("End call"));
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    dispatch(setCallStatus("Call ended"));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     dispatch(setCallActive(false));
     dispatch(setCallAccepted(false));
     dispatch(setCallDetails(null));
     setStream(null);
-    myVideoRef.current.srcObject = null;
-    remoteVideoRef.current.srcObject = null;
+    if (myVideoRef.current) myVideoRef.current.srcObject = null;
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
     fetchCallLogs();
-  }, [dispatch, stopTimer, setStream, myVideoRef, remoteVideoRef]);
+  }, [dispatch, stopRingtone, stopTimer, setStream, myVideoRef, remoteVideoRef, fetchCallLogs]);
 
   useEffect(() => {
-    if (userData) {
+    if (userData?._id) {
       fetchCallLogs();
     }
-  }, [userData]);
+  }, [userData?._id, fetchCallLogs]);
 
   useEffect(() => {
     if (peer) {
       peer.on("call", (incomingCall) => {
-        setIncommingCall(incomingCall);
-        const callDetails = incomingCall?.metadata?.callDetails;
-        handleIncommingCall(callDetails);
+        setIncomingPeerCall(incomingCall);
+        const details = incomingCall?.metadata?.callDetails;
+        if (details) {
+          handleIncommingCall(details);
+        }
       });
     }
   }, [peer, handleIncommingCall]);
@@ -171,108 +195,141 @@ const CallPageLayout = () => {
     }
   }, [socket, handleIncommingCall, handleDeclineCall, handleAnswerCall, handleEndCall]);
 
+  const targetContact =
+    callDetails?.from?.id === userData?._id ? callDetails?.to : callDetails?.from;
+  const isVoiceOnly = (callDetails?.callType || callType) === "voice";
+
   return callIncomming || callActive ? (
-    <div className="w-full h-full absolute top-0 left-0 flex items-center justify-center pointer-events-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4">
+      {/* Active Call Window */}
       {callActive && (
         <div
           className={`${
-            isMinimized ? " w-[300px] h-[200px] " : "w-full h-full md:w-[600px] md:h-[500px]"
-          } bg-secondary rounded-lg boxShadow flex flex-col overflow-hidden pointer-events-auto z-50`}
+            isMinimized
+              ? "w-[300px] h-[220px] fixed bottom-4 right-4"
+              : "w-full max-w-[680px] h-[80vh] max-h-[580px]"
+          } bg-wa-panel-dark text-white rounded-2xl shadow-wa-modal flex flex-col overflow-hidden pointer-events-auto border border-white/10 transition-all select-none`}
         >
-          <div className="w-full flex justify-between items-center p-2">
-            <h2 className="text-text text-lg ">Let's Chat</h2>
-            <div className="flex gap-2">
-              {!isMinimized ? (
-                <button
-                  onClick={() => setIsMinimized(true)}
-                  className="p-1 hover:bg-background rounded-full"
-                >
-                  <AiOutlineFullscreenExit size={20} />
-                </button>
+          {/* Header */}
+          <div className="h-12 px-4 flex justify-between items-center bg-black/40 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              {isVoiceOnly ? (
+                <IoCall className="text-wa-teal" size={17} />
               ) : (
-                <button
-                  onClick={() => setIsMinimized(false)}
-                  className="p-1 hover:bg-background rounded-full"
-                >
-                  <AiOutlineFullscreen size={20} />
-                </button>
+                <IoVideocam className="text-wa-teal" size={19} />
               )}
+              <span className="text-sm font-semibold capitalize">
+                WhatsApp {isVoiceOnly ? "Voice Call" : "Video Call"}
+              </span>
             </div>
+            <button
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+            >
+              {isMinimized ? <AiOutlineFullscreen size={18} /> : <AiOutlineFullscreenExit size={18} />}
+            </button>
           </div>
 
-          <div className="w-full h-full bg-text flex flex-col p-1">
-            <div className="w-full h-full bg-background rounded-lg flex flex-col items-center justify-center p-4">
-              {!isMinimized && (
-                <div className="w-full h-full md:h-[300px] bg-zinc-400 relative overflow-hidden">
-                  <div className="w-full h-full bg-white overflow-hidden">
-                    {remoteVideoRef && (
-                      <video
-                        ref={remoteVideoRef}
-                        autoPlay
-                        playsInline
-                        className="w-full h-full object-cover"
-                      ></video>
-                    )}
+          {/* Call Body */}
+          <div className="flex-1 relative bg-zinc-900 flex flex-col items-center justify-center overflow-hidden">
+            {isVoiceOnly || isMinimized ? (
+              // Voice Call Screen
+              <div className="flex flex-col items-center justify-center p-6 text-center">
+                <div className="relative mb-4">
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-wa-teal shadow-xl">
+                    <img
+                      src={targetContact?.profilePic || "https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png"}
+                      alt={targetContact?.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                  <div
-                    className={`bg-white boxShadow z-10 absolute ${
-                      callAccepted ? "w-[150px] h-[100px] bottom-2 right-2" : "w-full h-full bottom-0 right-0"
-                    }`}
-                  >
-                    {myVideoRef && (
-                      <video
-                        ref={myVideoRef}
-                        autoPlay
-                        playsInline
-                        className="w-full h-full object-cover"
-                      ></video>
-                    )}
-                  </div>
+                  {callStatus === "Connected" && (
+                    <span className="absolute -inset-2 rounded-full border-2 border-wa-teal/40 animate-ping pointer-events-none"></span>
+                  )}
                 </div>
-              )}
-              <h2 className="leading-5 capitalize line-clamp-1 font-semibold">
-                {callDetails?.from?.id === userData?._id ? callDetails.to.name : callDetails.from.name}
-              </h2>
-              <p className="leading-5">
-                {callStatus === "Answered"
-                  ? `${(duration / 60).toFixed(0).padStart(2, '0')} : ${(duration % 60).toFixed(0).padStart(2, '0')}`
-                  : callStatus}
-              </p>
-            </div>
-            <CallPageFooter endCall={endCall} />
+                <h3 className="text-xl font-bold capitalize mb-1">{targetContact?.name || "Contact"}</h3>
+                <p className="text-sm text-wa-teal font-mono">
+                  {callStatus === "Connected"
+                    ? `${Math.floor(duration / 60).toString().padStart(2, "0")}:${(duration % 60).toString().padStart(2, "0")}`
+                    : callStatus}
+                </p>
+                {/* Hidden audio element for remote stream */}
+                <video ref={remoteVideoRef} autoPlay playsInline className="hidden" />
+              </div>
+            ) : (
+              // Video Call Screen
+              <div className="w-full h-full relative">
+                {/* Remote Stream Video */}
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+
+                {/* Local Video PiP */}
+                <div
+                  className={`absolute z-10 bottom-3 right-3 rounded-xl overflow-hidden shadow-2xl border-2 border-white/20 transition-all ${
+                    callAccepted ? "w-36 h-24" : "inset-0 w-full h-full"
+                  }`}
+                >
+                  <video
+                    ref={myVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* Floating Contact Name & Timer */}
+                <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-xs flex items-center gap-2">
+                  <span className="font-semibold capitalize">{targetContact?.name}</span>
+                  <span className="text-wa-teal font-mono">
+                    {callStatus === "Connected"
+                      ? `${Math.floor(duration / 60).toString().padStart(2, "0")}:${(duration % 60).toString().padStart(2, "0")}`
+                      : callStatus}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Footer Controls */}
+          <CallPageFooter endCall={endCall} isVoiceOnly={isVoiceOnly} />
         </div>
       )}
 
+      {/* Incoming Call Dialog */}
       {callIncomming && (
-        <div className="w-[300px] absolute right-6 bottom-6 bg-secondary/50 backdrop-blur-md rounded-lg px-2 py-4 flex flex-col items-center boxShadow pointer-events-auto">
-          <p className="capitalize font-semibold animate-bounce">incomming call...</p>
-          <div
-            className="w-20 h-20 rounded-full bg-cover overflow-hidden"
-            style={{
-              backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
-            }}
-          >
-            {callDetails && (
-              <img
-                src={callDetails?.from?.profilePic}
-                alt=""
-                className="object-cover h-full w-full object-center"
-              />
-            )}
+        <div className="w-[340px] bg-wa-panel-dark text-white rounded-2xl shadow-wa-modal border border-white/10 p-6 flex flex-col items-center pointer-events-auto animate-bounce-once select-none">
+          <span className="text-xs font-semibold uppercase tracking-wider text-wa-teal mb-3">
+            Incoming WhatsApp {callDetails?.callType === "voice" ? "Voice" : "Video"} Call
+          </span>
+
+          <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-wa-teal mb-3 shadow-lg">
+            <img
+              src={callDetails?.from?.profilePic || "https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png"}
+              alt={callDetails?.from?.name}
+              className="w-full h-full object-cover"
+            />
           </div>
-          <h2 className="font-semibold">{callDetails?.from?.name || "Username"}</h2>
-          <div className="flex flex-col w-full gap-1 mt-5">
+
+          <h3 className="text-lg font-bold capitalize mb-6">{callDetails?.from?.name || "Caller"}</h3>
+
+          <div className="w-full flex items-center justify-around gap-4">
             <button
               onClick={declineIncommingCall}
-              className="w-full py-2 text-text border-[1px] border-text rounded-lg hover:font-semibold duration-100"
+              className="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm shadow-md transition-colors flex items-center justify-center gap-2"
             >
+              <IoCall className="rotate-[135deg]" size={18} />
               Decline
             </button>
             <button
               onClick={answerIncommingCall}
-              className="w-full py-2 text-text rounded-lg bg-[#82B2ED] hover:bg-[#82B2ED]/70 hover:font-semibold duration-100"
+              className="flex-1 py-2.5 px-4 rounded-xl bg-wa-teal hover:bg-wa-teal-hover text-white font-semibold text-sm shadow-md transition-colors flex items-center justify-center gap-2"
             >
+              <IoCall size={18} />
               Answer
             </button>
           </div>

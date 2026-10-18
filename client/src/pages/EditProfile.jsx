@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { FaPlus } from "react-icons/fa";
+import { FiCamera } from "react-icons/fi";
 import { Button, Input, Loader } from "../components";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "../services/authService";
@@ -10,141 +10,134 @@ import toast from "react-hot-toast";
 
 const EditProfile = () => {
   const userData = useSelector((state) => state.global.userData);
-  const [fullname, setFullname] = useState(userData.name);
-  const [email, setEmail] = useState(userData.email);
-  const [profile, setProfile] = useState(userData.profilePic);
+  const [fullname, setFullname] = useState(userData?.name || "");
+  const [about, setAbout] = useState(userData?.about || "Hey there! I am using WhatsApp.");
+  const [email, setEmail] = useState(userData?.email || "");
+  const [profile, setProfile] = useState(userData?.profilePic || "");
   const [imageFile, setImageFile] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const uploadImageToCloudinary = async () => {
+  useEffect(() => {
+    if (userData) {
+      setFullname(userData.name || "");
+      setAbout(userData.about || "Hey there! I am using WhatsApp.");
+      setEmail(userData.email || "");
+      setProfile(userData.profilePic || "");
+    }
+  }, [userData]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImageFile(file);
+    setProfile(URL.createObjectURL(file));
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
     try {
-      setImageUploading(true);
-      const data = new FormData();
-      data.append("file", imageFile);
-
-      // console.log("data", data);
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/upload/upload-media`,
-        data
-      );
-
-      if (response?.data?.success) {
-        setProfile(response.data.file.path);
-        // console.log("response", response.data.file.path);
-      } else {
-        console.error(
-          "Upload failed:",
-          response?.data?.message || "Unknown error"
+      let uploadedPic = profile;
+      if (imageFile) {
+        setImageUploading(true);
+        const data = new FormData();
+        data.append("file", imageFile);
+        const res = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/upload/upload-media`,
+          data
         );
+        uploadedPic = res.data?.file?.path || res.data?.url || profile;
+        setImageUploading(false);
       }
-    } catch (error) {
-      console.error("Error uploading image:", error.message);
+
+      const response = await updateUser({
+        email,
+        name: fullname.trim(),
+        about: about.trim(),
+        profilePic: uploadedPic,
+      });
+
+      if (response.success) {
+        toast.success("Profile updated successfully");
+        dispatch(setUserData(response.user));
+        navigate("/profile");
+      } else {
+        toast.error(response.message);
+      }
+    } catch (err) {
+      console.error("Update profile error:", err);
+      toast.error("Failed to update profile");
     } finally {
+      setLoading(false);
       setImageUploading(false);
     }
   };
 
-  useEffect(() => {
-    if (imageFile) {
-      uploadImageToCloudinary();
-    }
-  }, [imageFile]);
-
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-
-    const data = {
-      name: fullname,
-      email: email,
-      profilePic: profile,
-    };
-    // console.log("form data", data);
-    const response = await updateUser(data);
-    // console.log(response);
-    if (response.success) {
-      toast.success(response.message);
-      dispatch(setUserData(response.user));
-
-      // setFullname('')
-      // setEmail('')
-      // setPassword('')
-      // setProfile('')
-      // setImageFile('')
-
-      navigate("/profile");
-    } else {
-      toast.error(response.message);
-    }
-  };
-
   return (
-    <div className="w-full h-full flex items-center justify-center">
+    <div className="w-full h-full flex items-center justify-center p-6 bg-wa-bg-light dark:bg-wa-bg-dark text-wa-text-primary-light dark:text-wa-text-primary-dark select-none">
       <form
         onSubmit={handleUpdate}
-        className=" bg-secondary text-text p-4 flex flex-col items-center gap-2 min-w-[300px] "
+        className="w-full max-w-md bg-wa-panel-light dark:bg-wa-panel-dark border border-wa-border-light dark:border-wa-border-dark rounded-2xl shadow-wa-modal p-6 flex flex-col items-center gap-4"
       >
-        <h2 className="text-3xl font-semibold ">Edit Your Profile</h2>
-        <div className="">
-          <label htmlFor="file" className="cursor-pointer p-1 ">
-            <div
-              className="w-16 h-16 bg-surface rounded-full overflow-hidden relative bg-cover"
-              style={{
-                backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
-              }}
-            >
-              <img src={profile} alt="" className="object-cover h-full" />
-              {!imageFile && (
-                <div className="absolute bottom-0 left-0 w-full flex items-center justify-center h-4 bg-surface">
-                  <FaPlus className="text-background" />
-                </div>
-              )}
-              {imageUploading && (
-                <div className="absolute top-0 left-0 w-full h-full bg-zinc-600 flex items-center justify-center">
-                  <Loader />
-                </div>
-              )}
+        <h2 className="text-2xl font-bold">Edit Profile</h2>
+
+        <div className="relative group my-2">
+          <label htmlFor="edit-profile-photo" className="cursor-pointer">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-wa-border-light dark:border-wa-border-dark bg-wa-surface shadow-md">
+              <img src={profile} alt="Avatar" className="w-full h-full object-cover" />
+            </div>
+            <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-wa-teal text-white flex items-center justify-center shadow-lg">
+              <FiCamera size={16} />
             </div>
           </label>
           <input
+            id="edit-profile-photo"
             type="file"
-            onChange={(e) => setImageFile(e.target.files[0])}
+            accept="image/*"
             className="hidden"
-            id="file"
+            onChange={handleFileChange}
           />
         </div>
-        <div className="flex flex-col gap-1">
+
+        <div className="w-full flex flex-col gap-3">
           <Input
-            type="email"
-            name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            label="Email"
-            readOnly
+            type="text"
+            label="Name"
+            value={fullname}
+            onChange={(e) => setFullname(e.target.value)}
+            placeholder="Your name"
+            required
           />
           <Input
             type="text"
-            name="fullname"
-            value={fullname}
-            onChange={(e) => setFullname(e.target.value)}
-            placeholder="Full Name"
-            label="Full Name"
+            label="About"
+            value={about}
+            onChange={(e) => setAbout(e.target.value)}
+            placeholder="About bio"
           />
-          {/* <Input
-          type="password"
-          name="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          label="Password"
-        /> */}
+          <Input
+            type="email"
+            label="Email"
+            value={email}
+            readOnly
+            className="opacity-70 cursor-not-allowed"
+          />
         </div>
-        <div className="w-full flex justify-end mt-4">
-          <Button type="submit" className="w-full">
-            Update Profile
+
+        <div className="w-full flex gap-3 mt-3">
+          <button
+            type="button"
+            onClick={() => navigate("/profile")}
+            className="flex-1 py-2.5 rounded-xl border border-wa-border-light dark:border-wa-border-dark hover:bg-wa-surface font-semibold text-sm transition-colors"
+          >
+            Cancel
+          </button>
+          <Button type="submit" className="flex-1">
+            {loading || imageUploading ? <Loader size={20} /> : "Save"}
           </Button>
         </div>
       </form>

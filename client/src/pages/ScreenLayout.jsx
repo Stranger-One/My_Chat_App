@@ -1,53 +1,45 @@
 import React from "react";
 import { ChatSection, UpdatesSection } from "../components";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import EmptyPage from "./EmptyPage";
-import { FaArrowLeft } from "react-icons/fa";
+import { useLocation, useNavigate } from "react-router-dom";
+import { BsArrowLeft } from "react-icons/bs";
 
 const ScreenLayout = ({
   children,
   chatSection,
   updatesSection,
-  noNavigation,
 }) => {
   const navigate = useNavigate();
-  const location = useLocation()
-  // console.log((location.pathname).replace('/', '').replace('-', ' '));
+  const location = useLocation();
+  const title = location.pathname.replace("/", "").replace("-", " ");
 
   return (
-    <div
-      className={`w-full grid ${
-        chatSection || updatesSection
-          ? "md:grid-cols-[250px_auto]"
-          : "md:grid-cols-[auto]"
-      } h-full`}
-    >
-      {chatSection ? (
-        <div className="hidden md:inline-block">
+    <div className="w-full h-full flex overflow-hidden bg-wa-bg-light dark:bg-wa-bg-dark">
+      {chatSection && (
+        <div className="hidden md:flex h-full">
           <ChatSection />
         </div>
-      ) : updatesSection ? (
-        <div className="hidden md:inline-block">
+      )}
+      {updatesSection && (
+        <div className="hidden md:flex h-full">
           <UpdatesSection />
         </div>
-      ) : null}
-      {/* {chatSection && (<div className="hidden md:inline-block">
-        <ChatSection />
-      </div>)}
-      {updatesSection && (<div className="hidden md:inline-block">
-        <UpdatesSection />
-      </div>)} */}
-      <div className="h-full w-full">
-        <div className=" bg-secondary shadow-md w-full flex gap-2 items-center p-3">
+      )}
+
+      <div className="flex-1 h-full flex flex-col bg-wa-panel-light dark:bg-wa-panel-dark overflow-hidden">
+        <div className="h-[60px] px-4 flex items-center gap-3 bg-wa-header-light dark:bg-wa-header-dark border-b border-wa-border-light dark:border-wa-border-dark select-none">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 bg-surface hover:bg-background cursor-pointer rounded-full"
+            className="p-2 rounded-full hover:bg-wa-surface text-wa-text-secondary-light dark:text-wa-text-secondary-dark transition-colors"
           >
-            <FaArrowLeft size={20} className="text-text" />
+            <BsArrowLeft size={19} />
           </button>
-          <h2 className="text-text capitalize text-lg">{(location.pathname).replace('/', '').replace('-', ' ')}</h2>
+          <h2 className="text-lg font-bold text-wa-text-primary-light dark:text-wa-text-primary-dark capitalize">
+            {title}
+          </h2>
         </div>
-        {children}
+        <div className="flex-1 overflow-y-auto">
+          {children}
+        </div>
       </div>
     </div>
   );

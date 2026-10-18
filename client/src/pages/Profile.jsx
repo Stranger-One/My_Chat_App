@@ -1,248 +1,240 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
-import { Button, Input, Loader } from "../components";
-import { logout, setIsAuthenticated, setUserData } from "../store/globalSlice";
-import { TbPencil } from "react-icons/tb";
-import { FiCamera } from "react-icons/fi";
+import { setUserData, setTheme, logout } from "../store/globalSlice";
+import { TbPencil, TbCheck, TbCamera } from "react-icons/tb";
+import { BsSunFill, BsMoonFill } from "react-icons/bs";
 import { updateUser } from "../services/authService";
 import toast from "react-hot-toast";
-import uploadToCloudinary from "../services/uploadToCloudinary.js";
 import axios from "axios";
-import { TbLogout } from "react-icons/tb";
+import Loader from "../components/Loader";
 
 const Profile = () => {
   const userData = useSelector((state) => state.global.userData);
-  const [fullname, setFullname] = useState("");
-  const [email, setEmail] = useState("");
-  const [profile, setProfile] = useState("");
-  const [imageFile, setImageFile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [editName, setEditName] = useState(false);
+  const theme = useSelector((state) => state.global.theme);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const nameInputRef = useRef(null);
-  const [enableAction, setEnableAction] = useState(false);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate("/");
-  };
+  const [name, setName] = useState("");
+  const [about, setAbout] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingAbout, setIsEditingAbout] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
-  const navigateToEdit = () => {
-    // console.log("navigateToEdit")
-    navigate("edit");
-  };
-
-  const uploadImageToCloudinary = async () => {
-    try {
-      // console.log("Uploading to cloudinary...");
-      setImageUploading(true);
-      const data = new FormData();
-      data.append("file", imageFile);
-
-      const response = await uploadToCloudinary(data);
-
-      if (response?.data?.success) {
-        setProfile(response.data.file.path);
-        // console.log("response", response.data.file.path);
-      } else {
-        console.error(
-          "Upload failed:",
-          response?.data?.message || "Unknown error",
-        );
-      }
-    } catch (error) {
-      console.error("Error uploading image:", error.message);
-    } finally {
-      setImageUploading(false);
-    }
-  };
-
-  const handleUpdate = async () => {
-    const data = {
-      name: fullname,
-      email: email,
-      profilePic: profile,
-    };
-    // console.log("form data", data);
-    const response = await updateUser(data);
-    // console.log("response", response);
-    if (response.success) {
-      toast.success(response.message);
-      dispatch(setUserData(response.user));
-    } else {
-      toast.error(response.message);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    // console.log("selectedFile", selectedFile);
-    if (!selectedFile) return;
-    setImageFile(selectedFile);
-    setEnableAction(true);
-    const filePreview = URL.createObjectURL(selectedFile);
-    setProfile(filePreview);
-  };
-
-  const handleEdit = () => {
-    setEditName(true);
-    setEnableAction(true);
-    setTimeout(() => {
-      nameInputRef.current?.focus(); // Set focus to the input field
-    }, 0);
-  };
-
-  const handleCancle = () => {
-    setFullname(userData.name);
-    setEmail(userData.email);
-    setProfile(userData.profilePic);
-    setEnableAction(false);
-    setEditName(false);
-    setImageFile(null);
-  };
-
-  const handleSave = async () => {
-    setLoading(true);
-    let uploadedImageUrl = null;
-
-    if (imageFile) {
-      try {
-        // console.log("Uploading to cloudinary...");
-        const data = new FormData();
-        data.append("file", imageFile);
-
-        const response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/upload/upload-media`,
-          data,
-        );
-
-        // console.log("upload response", response.data.file.path);
-
-        if (response.data.success) {
-          setImageFile(null);
-          uploadedImageUrl = response.data.file.path;
-        } else {
-          // console.log("Upload failed:", response);
-        }
-        // console.log("Uploading to cloudinary success...", {
-        //   uploadedImageUrl
-        // });
-      } catch (error) {
-        console.error("Error updating..", error);
-      }
-    }
-
-    const data = {
-      name: fullname,
-      email: email,
-    };
-    if (uploadedImageUrl) {
-      data.profilePic = uploadedImageUrl;
-    }
-
-    // console.log("finally", data);
-    const response = await updateUser(data);
-    // console.log("response", response);
-    if (response.success) {
-      toast.success(response.message);
-      dispatch(setUserData(response.user));
-    } else {
-      toast.error(response.message);
-    }
-    setEnableAction(false);
-
-    setLoading(false);
-    setEditName(false);
-  };
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (userData) {
-      setFullname(userData.name);
-      setEmail(userData.email);
-      setProfile(userData.profilePic);
+      setName(userData.name || "");
+      setAbout(userData.about || "Hey there! I am using WhatsApp.");
     }
   }, [userData]);
 
+  const handleSaveName = async () => {
+    if (!name.trim()) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await updateUser({ email: userData.email, name: name.trim() });
+      if (res.success) {
+        dispatch(setUserData(res.user));
+        toast.success("Name updated");
+        setIsEditingName(false);
+      }
+    } catch (e) {
+      toast.error("Failed to update name");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveAbout = async () => {
+    if (!about.trim()) {
+      toast.error("About cannot be empty");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await updateUser({ email: userData.email, about: about.trim() });
+      if (res.success) {
+        dispatch(setUserData(res.user));
+        toast.success("About updated");
+        setIsEditingAbout(false);
+      }
+    } catch (e) {
+      toast.error("Failed to update about");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      const res = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/upload/upload-media`,
+        data
+      );
+      const photoUrl = res.data?.file?.path || res.data?.url;
+      if (photoUrl) {
+        const updateRes = await updateUser({ email: userData.email, profilePic: photoUrl });
+        if (updateRes.success) {
+          dispatch(setUserData(updateRes.user));
+          toast.success("Profile photo updated");
+        }
+      }
+    } catch (err) {
+      console.error("Photo upload error:", err);
+      toast.error("Failed to upload photo");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   return (
-    <div className="w-full h-full bg-cover bg-background text-text flex items-center justify-center pb-16">
-      <div className="w-full h-full flex flex-col items-center justify-center  relative px-5 ">
-        {/* Profile: */}
-        <div className=" flex flex-col item-center justify-center">
-          <label htmlFor="file" className="cursor-pointer p-1 mx-auto relative">
-            <div
-              className="w-32 h-32 bg-surface rounded-full relative bg-cover overflow-hidden"
-              style={{
-                backgroundImage: `url(https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png)`,
-              }}
-            >
-              <img src={profile} alt="" className="object-cover " />
-            </div>
-            <div className="w-10 h-10 absolute bg-primary bottom-0 right-0 rounded-full flex items-center justify-center z-10">
-              <FiCamera size={20} className="text-background" />
-            </div>
-          </label>
+    <div className="w-full h-full flex flex-col items-center p-6 bg-wa-panel-light dark:bg-wa-panel-dark text-wa-text-primary-light dark:text-wa-text-primary-dark select-none overflow-y-auto">
+      <div className="w-full max-w-md flex flex-col items-center">
+        {/* Profile Picture with hover overlay */}
+        <div className="relative group my-4">
+          <div className="w-36 h-36 rounded-full overflow-hidden border-2 border-wa-border-light dark:border-wa-border-dark shadow-md">
+            <img
+              src={userData?.profilePic || "https://www.pngkey.com/png/full/73-730477_first-name-profile-image-placeholder-png.png"}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="absolute inset-0 rounded-full bg-black/50 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          >
+            {uploadingImage ? (
+              <Loader size={24} />
+            ) : (
+              <>
+                <TbCamera size={26} className="mb-1" />
+                <span className="text-[11px] font-semibold uppercase text-center px-2">
+                  Change Profile Photo
+                </span>
+              </>
+            )}
+          </button>
+
           <input
+            ref={fileInputRef}
             type="file"
-            onChange={handleFileChange}
+            accept="image/*"
             className="hidden"
-            id="file"
+            onChange={handleImageChange}
           />
         </div>
 
-        {/*  Email: and  Name: */}
-        <div className="  mt-4 ">
-          <div className="flex items-center justify-start gap-2 w-fit  mx-auto mt-2">
-            <p className="text-xl w-full">
-              <span className="text-xl font-semibold">Email:</span> {email}
-            </p>
-          </div>
-          <div className=" w-fit mx-auto mt-2">
-            <label htmlFor="fullname" className="text-xl font-semibold mr-2">
-              Name:
-            </label>
-            <div className="inline-block">
+        {/* Your Name Section */}
+        <div className="w-full mt-6 p-4 rounded-xl bg-wa-surface border border-wa-border-light dark:border-wa-border-dark">
+          <label className="text-xs font-semibold text-wa-teal dark:text-wa-green uppercase tracking-wider block mb-1">
+            Your name
+          </label>
+          <div className="flex items-center justify-between">
+            {isEditingName ? (
               <input
-                ref={nameInputRef}
                 type="text"
-                name="fullname"
-                value={fullname}
-                onChange={(e) => setFullname(e.target.value)}
-                placeholder="Username"
-                readOnly={editName ? false : true}
-                className="bg-transparent border-none outline-none text-lg"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+                className="w-full bg-transparent text-[15px] font-medium outline-none border-b border-wa-teal pb-0.5"
               />
-              {!editName && (
-                <button
-                  onClick={handleEdit}
-                  className="hover:bg-secondary duration-100 p-2 rounded-full "
-                >
-                  <TbPencil size={20} />
-                </button>
-              )}
-            </div>
+            ) : (
+              <p className="text-[15px] font-medium">{userData?.name || "Username"}</p>
+            )}
+
+            <button
+              onClick={isEditingName ? handleSaveName : () => setIsEditingName(true)}
+              className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-wa-text-secondary-light dark:text-wa-text-secondary-dark ml-2"
+            >
+              {isEditingName ? <TbCheck size={18} className="text-wa-teal" /> : <TbPencil size={18} />}
+            </button>
+          </div>
+          <p className="text-[11px] text-wa-text-secondary-light dark:text-wa-text-secondary-dark mt-2 leading-relaxed">
+            This is not your username or pin. This name will be visible to your WhatsApp contacts.
+          </p>
+        </div>
+
+        {/* About Section */}
+        <div className="w-full mt-4 p-4 rounded-xl bg-wa-surface border border-wa-border-light dark:border-wa-border-dark">
+          <label className="text-xs font-semibold text-wa-teal dark:text-wa-green uppercase tracking-wider block mb-1">
+            About
+          </label>
+          <div className="flex items-center justify-between">
+            {isEditingAbout ? (
+              <input
+                type="text"
+                value={about}
+                onChange={(e) => setAbout(e.target.value)}
+                autoFocus
+                className="w-full bg-transparent text-[15px] font-medium outline-none border-b border-wa-teal pb-0.5"
+              />
+            ) : (
+              <p className="text-[15px] font-medium text-wa-text-secondary-light dark:text-wa-text-secondary-dark">
+                {userData?.about || "Hey there! I am using WhatsApp."}
+              </p>
+            )}
+
+            <button
+              onClick={isEditingAbout ? handleSaveAbout : () => setIsEditingAbout(true)}
+              className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-wa-text-secondary-light dark:text-wa-text-secondary-dark ml-2"
+            >
+              {isEditingAbout ? <TbCheck size={18} className="text-wa-teal" /> : <TbPencil size={18} />}
+            </button>
           </div>
         </div>
 
-        {enableAction && (
-          <div className="flex gap-2 mt-10">
-            <Button bg="bg-secondary" onClick={handleCancle}>
-              Cancle
-            </Button>
-            <Button onClick={handleSave}>
-              {loading ? <Loader /> : "Save"}
-            </Button>
+        {/* Email Address Section */}
+        <div className="w-full mt-4 p-4 rounded-xl bg-wa-surface border border-wa-border-light dark:border-wa-border-dark flex items-center justify-between">
+          <div>
+            <label className="text-xs font-semibold text-wa-teal dark:text-wa-green uppercase tracking-wider block mb-1">
+              Email
+            </label>
+            <p className="text-[14px] font-medium">{userData?.email}</p>
           </div>
-        )}
+          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-wa-teal/10 text-wa-teal">
+            Verified
+          </span>
+        </div>
 
-        <div className=" absolute top-2 right-2">
-          <button
-            onClick={handleLogout}
-            className="bg-secondary last:hover:brightness-90 p-2 rounded-lg"
-          >
-            <TbLogout size={24} className="text-text" />
-          </button>
+        {/* Theme Settings Section */}
+        <div className="w-full mt-4 p-4 rounded-xl bg-wa-surface border border-wa-border-light dark:border-wa-border-dark">
+          <label className="text-xs font-semibold text-wa-teal dark:text-wa-green uppercase tracking-wider block mb-2">
+            Theme
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => dispatch(setTheme("light"))}
+              className={`p-2.5 rounded-xl flex items-center justify-center gap-2 border text-sm font-semibold transition-all ${
+                theme === "light"
+                  ? "border-wa-teal bg-wa-panel-light text-wa-teal shadow-sm"
+                  : "border-transparent bg-black/5 dark:bg-white/5 opacity-70"
+              }`}
+            >
+              <BsSunFill size={15} /> Light
+            </button>
+            <button
+              onClick={() => dispatch(setTheme("dark"))}
+              className={`p-2.5 rounded-xl flex items-center justify-center gap-2 border text-sm font-semibold transition-all ${
+                theme === "dark"
+                  ? "border-wa-teal bg-wa-panel-dark text-wa-teal shadow-sm"
+                  : "border-transparent bg-black/5 dark:bg-white/5 opacity-70"
+              }`}
+            >
+              <BsMoonFill size={14} /> Dark
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,18 +1,24 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ReceiveMsg, ChatInputFooter, ChatHeader, SendMsg } from "./index";
 import { useSocket } from "../contexts/SocketProvider";
-import { Link, useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
-import chatBackground from '../assets/chat-bg.png'
+import { useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { setLightboxMedia } from "../store/globalSlice";
+import { IoClose, IoDownloadOutline } from "react-icons/io5";
+import moment from "moment";
 
 const Chat = () => {
   const onlineUsers = useSelector((state) => state.global.onlineUsers);
   const userData = useSelector((state) => state.global.userData);
+  const lightboxMedia = useSelector((state) => state.global.lightboxMedia);
   const [allMessages, setAllMessages] = useState([]);
   const [user, setUser] = useState(null);
+  const [inChatSearch, setInChatSearch] = useState(false);
+  const [chatSearchQuery, setChatSearchQuery] = useState("");
   const messagesEndRef = useRef(null);
   const socket = useSocket();
   const params = useParams();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -24,108 +30,194 @@ const Chat = () => {
     }
   }, []);
 
-  // Listen for new chat messages
   const handleReceiveMessages = useCallback(
     (conversation) => {
-      // console.log("receive-chat-messages", conversation);
-      // console.log("params.userId", params.userId);
-
-      // Ensure the message belongs to the currently opened chat
       const isRelevantChat =
         (conversation?.receiver === userData?._id &&
           conversation?.sender === params.userId) ||
         (conversation?.sender === userData?._id &&
           conversation?.receiver === params.userId);
 
-      // console.log("isRelevantChat", isRelevantChat);
-
-      // Only update messages if the chat is relevant
       if (isRelevantChat) {
-        setAllMessages(conversation?.messages);
-        const receiveMessages = conversation?.messages.filter(
-          (message) => message.receiver === userData._id
-        );
-        // console.log(receiveMessages);
+        setAllMessages(conversation?.messages || []);
+        const receiveMessages = conversation?.messages?.filter(
+          (message) => message.receiver === userData?._id
+        ) || [];
 
-        if (!receiveMessages[receiveMessages.length - 1].seen) {
-          socket.emit("seen", {
+        if (
+          receiveMessages.length > 0 &&
+          !receiveMessages[receiveMessages.length - 1]?.seen
+        ) {
+          socket?.emit("seen", {
             seenUserId: userData._id,
             chatUserId: params.userId,
             conversationId: conversation._id,
           });
         }
-      } else {
-        // console.log("Irrelevant chat, ignoring messages.");
       }
     },
-    [socket, params.userId]
+    [socket, params.userId, userData?._id]
   );
 
   useEffect(() => {
-    if(socket){
-      // Request chat messages when the component mounts or currentChatId changes
+    if (socket && params.userId) {
       socket.emit("request-chat-messages", params.userId, userData?._id);
-  
-      // Listen for user details
       socket.on("chat-user-details", handleUserDetails);
       socket.on("receive-chat-messages", handleReceiveMessages);
-  
+
       return () => {
         socket.off("receive-chat-messages", handleReceiveMessages);
         socket.off("chat-user-details", handleUserDetails);
       };
     }
-  }, [socket, params.userId]);
+  }, [socket, params.userId, userData?._id, handleUserDetails, handleReceiveMessages]);
+
+  // Filter messages if search query is active
+  const filteredMessages = chatSearchQuery.trim()
+    ? allMessages?.filter((m) =>
+        m.text?.toLowerCase().includes(chatSearchQuery.toLowerCase())
+      )
+    : allMessages;
+
+  // Format date headers between message groups
+  const formatDateHeader = (timestamp) => {
+    const msgDate = moment(timestamp);
+    const now = moment();
+    if (now.isSame(msgDate, "day")) {
+      return "Today";
+    }
+    if (now.subtract(1, "day").isSame(msgDate, "day")) {
+      return "Yesterday";
+    }
+    return msgDate.format("MMMM DD, YYYY");
+  };
 
   return (
-    <div className="w-full h-[calc(100vh-50px)] md:h-screen grid grid-rows-[60px_auto_60px] bg-cover bg-background text-text relative " 
-    // style={{
-    //   backgroundImage: `url(${backgroundImage})`,
-    // }}
-    >
+    <div className="w-full h-full flex flex-col bg-wa-chat-light dark:bg-wa-chat-dark relative overflow-hidden select-text">
+      {/* WhatsApp Header */}
       {user ? (
-        <>
-          {/* Chat Header */}
-          <ChatHeader user={user} onlineUsers={onlineUsers} />
+        <ChatHeader
+          user={user}
+          onlineUsers={onlineUsers}
+          onSearchToggle={(val) => {
+            setInChatSearch(val);
+            if (!val) setChatSearchQuery("");
+          }}
+          searchQuery={chatSearchQuery}
+          setSearchQuery={setChatSearchQuery}
+        />
+      ) : (
+        <div className="h-[60px] bg-wa-header-light dark:bg-wa-header-dark border-b border-wa-border-light dark:border-wa-border-dark flex items-center px-4">
+          <div className="h-4 w-32 bg-black/10 dark:bg-white/10 rounded animate-pulse"></div>
+        </div>
+      )}
 
-          <div className="chat-messages overflow-auto h-[calc(100vh-180px)] md:h-[calc(100vh-120px)] relative w-full">
-            {!userData?.verified ? (
-              <div className="absolute top-0 left-0 w-full h-full bg-background flex flex-col items-center justify-center ">
-                <h1 className="text-red-600 text-2xl">
-                  Verify Your Email to Start chat
-                </h1>
-                <Link to="/profile/verify-account" className="hover:underline">
-                  Verify here
-                </Link>
-              </div>
-            ) : (
-              <div className="w-full p-2 h-full md:h-fit flex flex-col gap-[2px] ">
-                {allMessages?.length > 0 ? (
-                  allMessages?.map((message, index) =>
-                    message.sender == userData?._id ? (
-                      <SendMsg key={index} message={message} />
-                    ) : (
-                      <ReceiveMsg key={index} message={message} />
-                    )
-                  )
-                ) : (
-                  <div className="text-center text-lg p-4">No messages yet</div>
+      {/* In-Chat Search Bar */}
+      {inChatSearch && (
+        <div className="px-4 py-2 bg-wa-panel-light dark:bg-wa-panel-dark border-b border-wa-border-light dark:border-wa-border-dark flex items-center justify-between z-20 shadow-sm">
+          <input
+            type="text"
+            placeholder="Search in this chat..."
+            value={chatSearchQuery}
+            onChange={(e) => setChatSearchQuery(e.target.value)}
+            className="w-full bg-transparent text-sm text-wa-text-primary-light dark:text-wa-text-primary-dark outline-none"
+            autoFocus
+          />
+          <button
+            onClick={() => {
+              setInChatSearch(false);
+              setChatSearchQuery("");
+            }}
+            className="text-wa-text-secondary-light dark:text-wa-text-secondary-dark hover:text-wa-text-primary-light"
+          >
+            <IoClose size={18} />
+          </button>
+        </div>
+      )}
+
+      {/* Messages Scroll Area with Authentic WhatsApp Doodle Wallpaper */}
+      <div className="whatsapp-chat-bg flex-1 overflow-y-auto px-2 sm:px-6 py-4 flex flex-col justify-start">
+        {filteredMessages && filteredMessages.length > 0 ? (
+          filteredMessages.map((message, index) => {
+            const isSentByMe = message.sender === userData?._id;
+            const prevMsg = filteredMessages[index - 1];
+            const showDateHeader =
+              !prevMsg ||
+              !moment(message.createdAt).isSame(moment(prevMsg.createdAt), "day");
+
+            return (
+              <React.Fragment key={message._id || index}>
+                {/* Floating Date Pill */}
+                {showDateHeader && (
+                  <div className="flex justify-center my-3 sticky top-2 z-10 select-none">
+                    <span className="bg-wa-panel-light dark:bg-wa-panel-dark text-wa-text-secondary-light dark:text-wa-text-secondary-dark text-[11.5px] font-medium py-1 px-3 rounded-lg shadow-sm border border-wa-border-light dark:border-wa-border-dark uppercase tracking-wide">
+                      {formatDateHeader(message.createdAt)}
+                    </span>
+                  </div>
                 )}
 
-                {/* Scroll target */}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
+                {/* Message Bubble */}
+                {isSentByMe ? (
+                  <SendMsg message={message} targetUserId={params.userId} />
+                ) : (
+                  <ReceiveMsg message={message} targetUserId={params.userId} />
+                )}
+              </React.Fragment>
+            );
+          })
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center select-none">
+            <span className="bg-wa-panel-light/90 dark:bg-wa-panel-dark/90 backdrop-blur-sm text-wa-text-secondary-light dark:text-wa-text-secondary-dark text-xs py-1 px-4 rounded-lg shadow-sm border border-wa-border-light dark:border-wa-border-dark">
+              🔒 Messages and calls are end-to-end encrypted. No one outside of this chat can read or listen to them.
+            </span>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* WhatsApp Input Footer */}
+      <ChatInputFooter />
+
+      {/* Media Lightbox Modal */}
+      {lightboxMedia && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">
+          <div className="absolute top-4 right-4 flex items-center gap-3">
+            <a
+              href={lightboxMedia.url}
+              download={lightboxMedia.name || "media"}
+              target="_blank"
+              rel="noreferrer"
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              title="Download"
+            >
+              <IoDownloadOutline size={22} />
+            </a>
+            <button
+              onClick={() => dispatch(setLightboxMedia(null))}
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              title="Close"
+            >
+              <IoClose size={24} />
+            </button>
           </div>
 
-          {/* Chat Input Footer */}
-          <ChatInputFooter />
-        </>
-      ) : (
-        <div className="flex justify-center items-center w-full md:h-screen">
-          <h1 className="text-text font-semibold text-xl">
-            Loading Messages...
-          </h1>
+          <div className="max-w-[90vw] max-h-[85vh] overflow-hidden rounded-lg">
+            {lightboxMedia.type === "image" ? (
+              <img
+                src={lightboxMedia.url}
+                alt={lightboxMedia.name || "Preview"}
+                className="w-full h-full object-contain max-h-[85vh]"
+              />
+            ) : (
+              <video
+                src={lightboxMedia.url}
+                controls
+                autoPlay
+                className="w-full h-full object-contain max-h-[85vh]"
+              />
+            )}
+          </div>
         </div>
       )}
     </div>

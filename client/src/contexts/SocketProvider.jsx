@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { io } from "socket.io-client";
-import { setOnlineUsers } from "../store/globalSlice";
+import { setOnlineUsers, setTypingUser } from "../store/globalSlice";
 
 const SocketContext = createContext(null);
 
@@ -26,44 +26,50 @@ export const SocketProvider = (props) => {
 
       socketInstance.on("connect", () => {
         setIsSocketConnected(true);
-        console.log("Socket connected successfully!");
       });
 
       socketInstance.on('connect_error', (error) => {
-        console.error('Connection error:', error);
+        console.error('Socket connection error:', error);
       });
-
-      // socketInstance.on("onlineUsers", (data) => {
-      //     console.log("onlineUsers", data);
-      //     dispatch(setOnlineUsers(data));
-      //   });
 
       socketInstance.on("disconnect", () => {
         setIsSocketConnected(false);
-        // console.log("Socket disconnected.");
       });
 
       return socketInstance;
     }
     return null;
-  }, [userData, token]); // Regenerate socket when token changes
+  }, [userData?._id, token]);
 
   useEffect(() => {
     if (socket) {
-      // Disconnect socket on token removal (logout) or unmount
       socket.on("onlineUsers", (data) => {
-        // console.log("onlineUsers", data);
         dispatch(setOnlineUsers(data));
       });
 
+      const handleTyping = ({ senderId }) => {
+        dispatch(setTypingUser({ userId: senderId, isTyping: true }));
+      };
+
+      const handleStopTyping = ({ senderId }) => {
+        dispatch(setTypingUser({ userId: senderId, isTyping: false }));
+      };
+
+      socket.on("typing", handleTyping);
+      socket.on("user-typing", handleTyping);
+      socket.on("stop-typing", handleStopTyping);
+      socket.on("user-stop-typing", handleStopTyping);
+
       return () => {
         socket.off("onlineUsers");
-
+        socket.off("typing", handleTyping);
+        socket.off("user-typing", handleTyping);
+        socket.off("stop-typing", handleStopTyping);
+        socket.off("user-stop-typing", handleStopTyping);
         socket.disconnect();
-        // console.log("Socket disconnected on logout.");
       };
     }
-  }, [socket]);
+  }, [socket, dispatch]);
 
   return (
     <SocketContext.Provider value={isSocketConnected ? socket : null}>
@@ -71,7 +77,3 @@ export const SocketProvider = (props) => {
     </SocketContext.Provider>
   );
 };
-
-// socketInstance.on("onlineUsers", (data) => {
-//   console.log("onlineUsers", data);
-// });
